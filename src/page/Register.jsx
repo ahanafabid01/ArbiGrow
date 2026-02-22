@@ -11,7 +11,7 @@ export default function RegisterForm() {
   const setUser = useUserStore((state) => state.setUser);
   const setToken = useUserStore((state) => state.setToken);
   const [isReferralLocked, setIsReferralLocked] = useState(false);
-
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); 
 
   const [agree, setAgree] = useState(false);
 
@@ -226,7 +226,7 @@ export default function RegisterForm() {
 
             <div className="relative w-full">
               <input
-                type= "password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
@@ -248,13 +248,19 @@ export default function RegisterForm() {
             {/* Confirm Password */}
             <div className="relative w-full">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirm_password"
                 placeholder="Confirm your password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
-              
+               <button
+              type="button"
+             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
+             >
+           {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+           </button>
             </div>
 
             {/* Checkbox */}
