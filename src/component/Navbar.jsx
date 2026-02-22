@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, Zap, LogIn, UserPlus, ChevronDown, LayoutDashboard,} from "lucide-react";
+import {
+  Menu,
+  X,
+  Zap,
+  LogIn,
+  UserPlus,
+  ChevronDown,
+  LayoutDashboard,
+} from "lucide-react";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../store/userStore";
@@ -15,6 +23,9 @@ export default function Navbar() {
   const token = useUserStore((state) => state.token);
   const logout = useUserStore((state) => state.logout);
   const isLoggedIn = !!token;
+
+  const is_admin = useUserStore.getState().user?.is_admin;
+  // console.log("is admin", is_admin);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -131,14 +142,16 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                     {/* Contion Addd */}
                     <Button
-                    icon={<LayoutDashboard />}
+                      icon={<LayoutDashboard />}
                       variant="frosted"
-                      onClick={() => navigate("/admin-dashboard")}
+                      onClick={() =>
+                        navigate(is_admin ? "/admin-dashboard" : "/dashboard")
+                      }
                     >
                       Dashboard
                     </Button>
+
                     <Button variant="gradient" onClick={handleLogout}>
                       Logout
                     </Button>
@@ -277,9 +290,13 @@ export default function Navbar() {
                     {/* Contion Addd */}
                     <Button
                       variant="frosted"
-                      icon={<LayoutDashboard/>}
+                      icon={<LayoutDashboard />}
                       onClick={() => {
-                        navigate("/admin-dashboard");
+                        navigate(
+                          navigate(
+                            is_admin ? "/admin-dashboard" : "/dashboard",
+                          ),
+                        );
                         setIsMobileMenuOpen(false);
                       }}
                     >
