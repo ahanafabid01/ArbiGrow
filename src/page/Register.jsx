@@ -4,6 +4,7 @@ import Button from "../component/Button";
 import { registerUser } from "../api/auth.api.js";
 import useUserStore from "../store/userStore.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function RegisterForm() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false); // NEW
-
+  const [showPassword, setShowPassword] = useState(false); 
   const [searchParams] = useSearchParams();
 
   // referral code from URL
@@ -225,12 +226,19 @@ export default function RegisterForm() {
 
             <div className="relative w-full">
               <input
-                type="password"
+                type= "password"
                 name="password"
                 placeholder="Enter your password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
+                <button
+              type="button"
+             onClick={() => setShowPassword(!showPassword)}
+             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
+             >
+           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+           </button>
               {errors.find((e) => e.field === "password") && (
                 <p className="text-xs text-red-500 mt-1">
                   {errors.find((e) => e.field === "password").message}
@@ -240,13 +248,13 @@ export default function RegisterForm() {
             {/* Confirm Password */}
             <div className="relative w-full">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="confirm_password"
                 placeholder="Confirm your password"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
-             
+              
             </div>
 
             {/* Checkbox */}
@@ -260,11 +268,15 @@ export default function RegisterForm() {
               />
               <p className="text-gray-400">
                 I agree to the{" "}
-                <span className="text-[#00CFF5] cursor-pointer hover:underline"
-                onClick={() => navigate('/terms-conditions')}
+                <a className="text-[#00CFF5] cursor-pointer hover:underline"
+                 href="/terms-conditions"
+                 rel="noopener noreferrer"
+
+                // onClick={() => navigate('/terms-conditions')}
+                target="_blank"
                 >
                   Terms & Conditions
-                </span>
+                </a>
               </p>
             </div>
 
