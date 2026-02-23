@@ -11,7 +11,7 @@ export default function RegisterForm() {
   const setUser = useUserStore((state) => state.setUser);
   const setToken = useUserStore((state) => state.setToken);
   const [isReferralLocked, setIsReferralLocked] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); 
+ 
 
   const [agree, setAgree] = useState(false);
 
@@ -28,6 +28,7 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false); // NEW
   const [showPassword, setShowPassword] = useState(false); 
+   const [showConfirmPassword, setShowConfirmPassword] = useState(false); 
   const [searchParams] = useSearchParams();
 
   // referral code from URL
