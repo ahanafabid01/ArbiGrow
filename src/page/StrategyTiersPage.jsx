@@ -1,13 +1,14 @@
 import { useState } from "react";
 
-import { tierGroups } from "./components/data/strategyData";
+import { tierGroups } from "../constants/strategyData.js";
+import Navbar from "../component/Navbar";
+import Footer from "../component/Footer";
+import HeroSection from "../component/package/HeroSection.jsx";
+import TierSection from "../component/package/TierSection.jsx";
+import ComplianceSection from "../component/package/ComplianceSection.jsx";
+import PackageModal from "../component/package/PackageModal.jsx";
 
-import Navbar from "../../component/Navbar";
-import Footer from "../../component/Footer";
-import TierSection from "./components/TierSection";
-import ComplianceSection from "./components/ComplianceSection";
-import PackageModal from "./components/PackageModal";
-import HeroSection from "./components/HeroSection";
+
 
 export default function StrategyTiersPage() {
   const [selectedPackage, setSelectedPackage] = useState(null);

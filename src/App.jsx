@@ -14,7 +14,7 @@ import ProtectedRoute from "./component/ProtectedRoute";
 import LegalPage from "./page/LegalInformation";
 import VerificationPending from "./page/VerificationPending";
 import AdminDashboard from "./page/AdminDashboard";
-import  StrategyTiersPage  from "./page/pages/StrategyTiersPage";
+import StrategyTiersPage from "./page/StrategyTiersPage.jsx";
 
 
 
@@ -55,7 +55,7 @@ const App = () => {
             <Route path="/legal-information" element={<LegalPage />} />
             <Route path="/not-found" element={<NotFoundPage />} />
             <Route path="/admin-dashboard" element={ <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-             <Route path ="home-page" element={<StrategyTiersPage />} />
+             <Route path ="/packages" element={<StrategyTiersPage />} />
           </Routes>
         </BrowserRouter>
       </>

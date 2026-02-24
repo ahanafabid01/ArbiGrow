@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, TrendingUp } from "lucide-react";
+import Button from "../Button";
+// import Button from "../../../component/Button";
 
 const riskColors = {
   Low: "border-green-500/30 bg-green-500/10 text-green-400",
@@ -111,9 +113,10 @@ export default function PackageModal({ selectedPackage, setSelectedPackage }) {
               </div>
 
               {/* CTA */}
-              <button className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-8 py-4 font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-cyan-500/40">
-                Proceed to Secure Allocation
-              </button>
+               <Button 
+                variant="gradient">
+                 Proceed to Secure Allocation
+               </Button>
 
               <p className="mt-4 text-center text-xs text-gray-500">Requires wallet connection and compliance verification</p>
             </div>
