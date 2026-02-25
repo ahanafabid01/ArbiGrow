@@ -41,7 +41,7 @@ export default function Navbar() {
   const navLinks = [
     { label: "Home", href: "#home" },
     { label: "Architecture", href: "#architecture" },
-    { label: "Features", href: "#features" },
+    { label: "Package", action: () => navigate("/packages")},
     { label: "Security", href: "#security" },
     { label: "Roadmap", href: "#roadmap" },
     { label: "About", href: "#about" },
@@ -105,20 +105,28 @@ export default function Navbar() {
 
               {/* Desktop Navigation */}
               <div className="hidden lg:flex items-center gap-4">
-                {navLinks.map((link, idx) => (
-                  <a
-                    key={idx}
-                    href={link.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate("/");
-                      scrollToSection(link.href);
-                    }}
-                    className="relative px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 group"
-                  >
-                    <span className="relative z-10">{link.label}</span>
-                  </a>
-                ))}
+               {navLinks.map((link, idx) => (
+                <a
+                key={idx}
+                href={link.href || "#"}
+                onClick={(e) => {
+                e.preventDefault();
+                setIsMobileMenuOpen(false);
+
+              if (link.action) {
+              link.action(); // ✅ packages যাবে
+              } else if (link.href) {
+              navigate("/");
+              setTimeout(() => {
+              scrollToSection(link.href);
+             }, 100);
+          }
+         }}
+    className="relative px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 group"
+  >
+    <span className="relative z-10">{link.label}</span>
+  </a>
+))}
               </div>
 
               {/* Desktop Auth Buttons */}
@@ -253,6 +261,12 @@ export default function Navbar() {
                       onClick={(e) => {
                         e.preventDefault();
                         scrollToSection(link.href);
+
+                         if (link.action) {
+                            link.action();
+                           } else if (link.href) {
+                              scrollToSection(link.href);
+                                  }
                       }}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
