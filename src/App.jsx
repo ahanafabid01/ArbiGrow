@@ -15,6 +15,7 @@ import LegalPage from "./page/LegalInformation";
 import VerificationPending from "./page/VerificationPending";
 import AdminDashboard from "./page/AdminDashboard";
 import StrategyTiersPage from "./page/StrategyTiersPage.jsx";
+import { UserDashboard } from "./page/UserDashboard.jsx";
 
 
 
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="/legal-information" element={<LegalPage />} />
             <Route path="/not-found" element={<NotFoundPage />} />
             <Route path="/admin-dashboard" element={ <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/user-dashboard" element={<UserDashboard />} />
              <Route path ="/packages" element={<StrategyTiersPage />} />
           </Routes>
         </BrowserRouter>
