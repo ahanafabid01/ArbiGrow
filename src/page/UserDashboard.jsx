@@ -111,6 +111,7 @@ export function UserDashboard() {
   label: "Transactions",
   icon: FileText,
   description: "Transaction history",
+  comingSoon: true,
 },
     {
       id: "referral",

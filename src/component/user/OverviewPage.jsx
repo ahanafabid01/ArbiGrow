@@ -183,7 +183,7 @@ const OverviewPage = ({
         
         <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-blue-600/5 to-cyan-600/5 p-6 md:p-8">
           {/* Card Image */}
-           <div className="pl-3 font-bold">Arbigrow Wallet</div>
+           <div className="pl-3 font-bold text-xl">Arbigrow Wallet</div>
           <div className="relative max-w-md mx-auto mb-6">
             <img
               src={arbxCardImg}
@@ -197,7 +197,7 @@ const OverviewPage = ({
                    px-4 pb-[45px] pl-[78px] sm:pl-[95px] sm:pb-[30px] md:px-6 md:pb-[45px] md:pl-[100px]"
             >
               <div className="text-white  text-sm md:text-xl drop-shadow-lg ml-1">
-                {user.full_name}
+                 {user.full_name.toUpperCase()}
               </div>
 
               <div className="flex items-center gap-1 mt-0 sm:mt-2">
@@ -250,12 +250,23 @@ const OverviewPage = ({
                 </div>
               </div>
             </div>
-            <div className="border-t border-white/10 pt-4">
-              <div className="text-xs text-gray-400 mb-1">Utility</div>
-              <div className="text-white">
-                Governance, Arbitrage Fee Discounts, and Staking Rewards
-              </div>
-            </div>
+            <div className="grid md:grid-cols-2 gap-6 border-t border-white/10 pt-4">
+  
+  <div>
+    <div className="text-xs text-gray-400 mb-1">Utility</div>
+    <div className="text-white">
+      Governance, Arbitrage Fee Discounts, and Staking Rewards
+    </div>
+  </div>
+
+  <div>
+    <div className="text-xs text-gray-400 mb-1">Token Listed</div>
+    <div className="text-white">
+      Socket, Rango , Sonarwatch , Metamask
+    </div>
+  </div>
+
+         </div>
           </div>
 
           {/* ARBX Description */}
