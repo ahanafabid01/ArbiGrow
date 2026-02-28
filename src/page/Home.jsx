@@ -30,7 +30,7 @@ const Home = () => {
       <WhyChooseUs />
       <MemberBenefits />
       <div id="architecture">
-       <TechnicalArchitecture />
+        <TechnicalArchitecture />
       </div>
       <div id="features">
         <CoreFeatures />
@@ -43,11 +43,14 @@ const Home = () => {
       </div>
       <Legal />
       <div id="about">
-        <Founders /> 
+        <Founders />
         <OurInvestors />
       </div>
       <Privacy />
-      <FAQ />
+      <div id="faq">
+        <FAQ />
+      </div>
+
       <Footer />
     </div>
   );

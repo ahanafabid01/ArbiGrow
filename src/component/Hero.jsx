@@ -17,7 +17,7 @@ export const Hero = () => {
   });
 
   useEffect(() => {
-    const targetDate = new Date("2026-03-01T00:00:00").getTime();
+    const targetDate = new Date("2026-03-06T00:00:00").getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -160,9 +160,7 @@ export const Hero = () => {
             variant="frosted"
             fullWidth={false}
             className="px-6 py-3"
-            onClick={() =>
-              window.open("https://example.com/whitepaper", "_blank")
-            }
+            onClick={() => window.open("/public/whitepaper.pdf", "_blank")}
           >
             Read Technical Whitepaper
           </Button>

@@ -8,8 +8,6 @@ import TierSection from "../component/package/TierSection.jsx";
 import ComplianceSection from "../component/package/ComplianceSection.jsx";
 import PackageModal from "../component/package/PackageModal.jsx";
 
-
-
 export default function StrategyTiersPage() {
   const [selectedPackage, setSelectedPackage] = useState(null);
 
@@ -18,19 +16,16 @@ export default function StrategyTiersPage() {
       <Navbar />
       <main className="pt-20 px-6 max-w-7xl mx-auto">
         <HeroSection />
-        
+
         {/* Pass the entire tierGroups array once, not mapping */}
-        <TierSection 
-          tierGroups={tierGroups} 
-          onSelect={setSelectedPackage} 
-        />
+        <TierSection tierGroups={tierGroups} onSelect={setSelectedPackage} />
 
         <ComplianceSection />
       </main>
       <Footer />
       <PackageModal
         selectedPackage={selectedPackage}
-        setSelectedPackage={setSelectedPackage} 
+        setSelectedPackage={setSelectedPackage}
       />
     </div>
   );

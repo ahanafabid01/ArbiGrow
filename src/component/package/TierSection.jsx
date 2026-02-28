@@ -31,7 +31,8 @@ export default function TierSection({ onSelect }) {
                   transition={{
                     delay: tierIndex * 0.1 + pkgIndex * 0.05,
                   }}
-                  onClick={() => onSelect(pkg)}
+                  // for future: modal disabled but need to
+                  // onClick={() => onSelect(pkg)}
                   className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0d1428] to-[#0a0e27] p-6 text-left transition-all hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10"
                 >
                   {/* Circuit Pattern Background */}
@@ -74,10 +75,10 @@ export default function TierSection({ onSelect }) {
                       {/* Logo */}
                       <div className="flex size-12  items-center justify-center rounded-full bg-gradient-to-br">
                         <img
-                       src={Logo}
-                      alt="My Logo"
-                      className="w-12 h-12 object-contain"
-                     />
+                          src={Logo}
+                          alt="My Logo"
+                          className="w-12 h-12 object-contain"
+                        />
                       </div>
 
                       {/* Chip */}
@@ -116,9 +117,7 @@ export default function TierSection({ onSelect }) {
 
                       <div className="flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1">
                         <div className="size-2 rounded-full bg-blue-400" />
-                        <span className="text-xs text-blue-300">
-                          Arbitrum
-                        </span>
+                        <span className="text-xs text-blue-300">Arbitrum</span>
                       </div>
                     </div>
                   </div>

@@ -61,7 +61,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/packages" element={<StrategyTiersPage />} />
           </Routes>
         </BrowserRouter>

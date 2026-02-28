@@ -53,12 +53,12 @@ export default function AdminLayout({
       disabled: true,
     },
   ];
-   const logout = useUserStore((state) => state.logout);
+  const logout = useUserStore((state) => state.logout);
 
   const handleLogout = () => {
-  logout();
-  navigate("/login");
-};
+    logout();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0e27] via-[#0d1137] to-[#0a0e27] text-white">
@@ -172,42 +172,40 @@ export default function AdminLayout({
 
           {/* Collapse Button */}
           <div className="p-4 border-t border-white/10 space-y-3">
-
-  {/* 🔥 Logout Button */}
-  <button
-    onClick={handleLogout}
-    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl 
+            {/* 🔥 Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl 
     bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 
     text-red-400 hover:text-red-300 transition-all duration-300"
-  >
-    <LogOut className="w-5 h-5 flex-shrink-0" />
-    {!sidebarCollapsed && (
-      <span className="text-sm font-medium">Logout</span>
-    )}
-  </button>
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && (
+                <span className="text-sm font-medium">Logout</span>
+              )}
+            </button>
 
-  {/* Collapse Button */}
-  <button
-    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-    className="hidden lg:flex w-full items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 text-gray-400 hover:text-white"
-  >
-    {sidebarCollapsed ? (
-      <ChevronRight className="w-5 h-5" />
-    ) : (
-      <>
-        <ChevronLeft className="w-5 h-5" />
-        <span className="text-sm">Collapse</span>
-      </>
-    )}
-  </button>
-
-</div>
+            {/* Collapse Button */}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex w-full items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 text-gray-400 hover:text-white"
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-5 h-5" />
+                  <span className="text-sm">Collapse</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </motion.aside>
 
       {/* Main Content */}
       <div
-        className="relative z-10 transition-all duration-300"
+        className="relative z-10 transition-all duration-300 pt-20"
         style={{
           marginLeft:
             window.innerWidth >= 1024
