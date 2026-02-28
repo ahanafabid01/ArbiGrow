@@ -16,7 +16,7 @@ export default function LoginForm() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [isSuccess, setIsSuccess] = useState(false);
-   const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -163,24 +163,23 @@ export default function LoginForm() {
             {errors.email && (
               <p className="text-xs text-red-500 mt-1">{errors.email}</p>
             )}
-              <div className="relative w-full">
-            <input
-               type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Enter your password"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
-              value={formData.password}
-              onChange={handleChange}
-            />
-             <button
-              type="button"
-             onClick={() => setShowPassword(!showPassword)}
-             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
-             >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-           </button>
-
-              </div> 
+            <div className="relative w-full">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
+                value={formData.password}
+                onChange={handleChange}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-red-500 mt-1">{errors.password}</p>
             )}

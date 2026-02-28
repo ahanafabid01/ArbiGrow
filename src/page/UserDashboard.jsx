@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Wallet,
   TrendingUp,
@@ -26,144 +26,203 @@ import {
   Link as LinkIcon,
   GitBranch,
   Star,
-  Award
-} from 'lucide-react';
-import arbxCardImg from '../assets/Card-design.png';
-import arbxCoinImg from '../assets/Coin.png';
-import Logo from '../assets/Arbigrow-Logo.png';
-import { mockMarketPrices, mockUserData, fixedReferralData, generateMockTransactions } from '../constants/mockdata.js';
-import { useNavigate } from 'react-router-dom';
-import ReferralPage from '../component/user/ReferralPage.jsx';
-import ProfilePage from '../component/user/ProfilePage.jsx';
-import OverviewPage from '../component/user/OverviewPage.jsx';
-import useUserStore from '../store/userStore.js';
-import { getAllUsers } from '../api/admin.api.js';
+  Award,
+} from "lucide-react";
+import arbxCardImg from "../assets/Card-design.png";
+import arbxCoinImg from "../assets/Coin.png";
+import Logo from "../assets/Arbigrow-Logo.png";
+import {
+  mockMarketPrices,
+  mockUserData,
+  fixedReferralData,
+  generateMockTransactions,
+} from "../constants/mockdata.js";
+import { useNavigate } from "react-router-dom";
+import ReferralPage from "../component/user/ReferralPage.jsx";
+import ProfilePage from "../component/user/ProfilePage.jsx";
+import OverviewPage from "../component/user/OverviewPage.jsx";
+import useUserStore from "../store/userStore.js";
 
 // Mock data for market prices
-  
 
 export function UserDashboard() {
-  const [activePage, setActivePage] = useState('overview');
+  const [activePage, setActivePage] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showCoinRain, setShowCoinRain] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [transactionFilter, setTransactionFilter] = useState('All');
+  const [transactionFilter, setTransactionFilter] = useState("All");
   const [transactions] = useState(generateMockTransactions());
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
-   const [user, setuUsers] = useState();
+  //  const [user, setuUsers] = useState();
   const navigate = useNavigate();
   const transactionsPerPage = 50;
+  const { user } = useUserStore();
 
-   useEffect(() => {
-    const fetchUsers = async () => {
-      const token = useUserStore.getState().token;
-       console.log("Token in fetchUsers:", token);
-      if (!token) return;
-
-      try {
-        const resData = await getAllUsers(token);
-        console.log("Fetched users:", resData);
-        if (resData?.status === 200) {
-          // ✅ Save users in state
-          const usersArray = resData.data?.users || [];
-          setuUsers(usersArray);
-          // console.log("Users array:", usersArray);
-        } else {
-          console.error(
-            "Failed to fetch users: ",
-            resData?.message || "Unknown error",
-          );
-        }
-        // setUsers(usersArray);
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
-      } finally {
-        // setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  useEffect(() => {
+    console.log("userrr", user);
+  }, [user]);
 
   const userPages = [
-    { id: 'overview', label: 'Overview', icon: Home, description: 'Dashboard & Wallets' },
-    { id: 'deposit', label: 'Deposit', icon: Download, description: 'Add funds', comingSoon: true },
-    { id: 'packages', label: 'Packages', icon: Package, description: 'Investment plans', comingSoon: true },
-    { id: 'investments', label: 'My Investments', icon: TrendingUp, description: 'Active investments', comingSoon: true },
-    { id: 'withdraw', label: 'Withdraw', icon: Upload, description: 'Withdraw funds', comingSoon: true },
-    { id: 'referral', label: 'Referral', icon: Users, description: 'Invite & earn' },
-    { id: 'profile', label: 'Profile', icon: UserCircle, description: 'Account settings' },
+    {
+      id: "overview",
+      label: "Overview",
+      icon: Home,
+      description: "Dashboard & Wallets",
+    },
+    {
+      id: "deposit",
+      label: "Deposit",
+      icon: Download,
+      description: "Add funds",
+      comingSoon: true,
+    },
+    {
+      id: "packages",
+      label: "Packages",
+      icon: Package,
+      description: "Investment plans",
+      comingSoon: true,
+    },
+    {
+      id: "investments",
+      label: "My Investments",
+      icon: TrendingUp,
+      description: "Active investments",
+      comingSoon: true,
+    },
+    {
+      id: "withdraw",
+      label: "Withdraw",
+      icon: Upload,
+      description: "Withdraw funds",
+      comingSoon: true,
+    },
+    {
+      id: "referral",
+      label: "Referral",
+      icon: Users,
+      description: "Invite & earn",
+    },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: UserCircle,
+      description: "Account settings",
+    },
   ];
 
   // Filter transactions
-  const filteredTransactions = transactionFilter === 'All'  
-    ? transactions 
-    : transactions.filter(t => t.type.toLowerCase().includes(transactionFilter.toLowerCase()));
+  const filteredTransactions =
+    transactionFilter === "All"
+      ? transactions
+      : transactions.filter((t) =>
+          t.type.toLowerCase().includes(transactionFilter.toLowerCase()),
+        );
 
   // Pagination
-  const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
+  const totalPages = Math.ceil(
+    filteredTransactions.length / transactionsPerPage,
+  );
   const startIndex = (currentPage - 1) * transactionsPerPage;
   const endIndex = startIndex + transactionsPerPage;
   const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed': return 'text-green-400 bg-green-500/10 border-green-500/30';
-      case 'Pending': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
-      case 'Processing': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-      default: return 'text-gray-400 bg-gray-500/10 border-gray-500/30';
+      case "Completed":
+        return "text-green-400 bg-green-500/10 border-green-500/30";
+      case "Pending":
+        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
+      case "Processing":
+        return "text-blue-400 bg-blue-500/10 border-blue-500/30";
+      default:
+        return "text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(mockUserData.referralLink);
+    const copiedLink = `${import.meta.env.VITE_FRONTNED_URL}/register?ref_code=${user.referral_code}`;
+    navigator.clipboard.writeText(copiedLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
   // ── Referral helpers ──────────────────────────────────────────
-  const totalReferrals = fixedReferralData.reduce((s, l) => s + l.users.length, 0);
-  const totalActiveReferrals = fixedReferralData.reduce((s, l) => s + l.users.filter(u => u.status === 'active').length, 0);
+  const totalReferrals = fixedReferralData.reduce(
+    (s, l) => s + l.users.length,
+    0,
+  );
+  const totalActiveReferrals = fixedReferralData.reduce(
+    (s, l) => s + l.users.filter((u) => u.status === "active").length,
+    0,
+  );
 
   const levelColors = {
-    1: { bg: 'from-blue-600/15 to-cyan-600/10',    border: 'border-blue-500/30',   text: 'text-blue-400',   dot: 'bg-blue-500' },
-    2: { bg: 'from-cyan-600/15 to-teal-600/10',    border: 'border-cyan-500/30',   text: 'text-cyan-400',   dot: 'bg-cyan-500' },
-    3: { bg: 'from-purple-600/15 to-violet-600/10',border: 'border-purple-500/30', text: 'text-purple-400', dot: 'bg-purple-500' },
-    4: { bg: 'from-pink-600/15 to-rose-600/10',    border: 'border-pink-500/30',   text: 'text-pink-400',   dot: 'bg-pink-500' },
-    5: { bg: 'from-amber-600/15 to-orange-600/10', border: 'border-amber-500/30',  text: 'text-amber-400',  dot: 'bg-amber-500' },
+    1: {
+      bg: "from-blue-600/15 to-cyan-600/10",
+      border: "border-blue-500/30",
+      text: "text-blue-400",
+      dot: "bg-blue-500",
+    },
+    2: {
+      bg: "from-cyan-600/15 to-teal-600/10",
+      border: "border-cyan-500/30",
+      text: "text-cyan-400",
+      dot: "bg-cyan-500",
+    },
+    3: {
+      bg: "from-purple-600/15 to-violet-600/10",
+      border: "border-purple-500/30",
+      text: "text-purple-400",
+      dot: "bg-purple-500",
+    },
+    4: {
+      bg: "from-pink-600/15 to-rose-600/10",
+      border: "border-pink-500/30",
+      text: "text-pink-400",
+      dot: "bg-pink-500",
+    },
+    5: {
+      bg: "from-amber-600/15 to-orange-600/10",
+      border: "border-amber-500/30",
+      text: "text-amber-400",
+      dot: "bg-amber-500",
+    },
   };
 
   const renderPageContent = () => {
     // Referral Page
-    if (activePage === 'referral') {
-      const activeLevel = fixedReferralData.find(l => l.level === selectedReferralLevel);
+    if (activePage === "referral") {
+      const activeLevel = fixedReferralData.find(
+        (l) => l.level === selectedReferralLevel,
+      );
       const lc = levelColors[selectedReferralLevel];
 
       return (
         <ReferralPage
-  totalReferrals={totalReferrals}
-  totalActiveReferrals={totalActiveReferrals}
-  mockUserData={mockUserData}
-  fixedReferralData={fixedReferralData}
-  levelColors={levelColors}
-  selectedReferralLevel={selectedReferralLevel}
-  setSelectedReferralLevel={setSelectedReferralLevel}
-  handleCopyLink={handleCopyLink}
-  copiedLink={copiedLink}
-  activeLevel={activeLevel}
-  lc={lc}
-/>
+          totalReferrals={totalReferrals}
+          totalActiveReferrals={totalActiveReferrals}
+          mockUserData={mockUserData}
+          fixedReferralData={fixedReferralData}
+          levelColors={levelColors}
+          selectedReferralLevel={selectedReferralLevel}
+          setSelectedReferralLevel={setSelectedReferralLevel}
+          handleCopyLink={handleCopyLink}
+          copiedLink={copiedLink}
+          activeLevel={activeLevel}
+          lc={lc}
+        />
       );
     }
 
     // Profile Page
-    if (activePage === 'profile') {
-    return <ProfilePage mockUserData={mockUserData} />;
+    if (activePage === "profile") {
+      return <ProfilePage mockUserData={mockUserData} />;
     }
 
-    if (activePage !== 'overview') {
+    if (activePage !== "overview") {
       return (
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="text-center">
@@ -177,26 +236,26 @@ export function UserDashboard() {
       );
     }
 
-   if (activePage === "overview") {
-   return (
-    <OverviewPage
-      mockUserData={mockUserData}
-      mockMarketPrices={mockMarketPrices}
-      arbxCardImg={arbxCardImg}
-      arbxCoinImg={arbxCoinImg}
-      transactionFilter={transactionFilter}
-      setTransactionFilter={setTransactionFilter}
-      currentTransactions={currentTransactions}
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}
-      totalPages={totalPages}
-      startIndex={startIndex}
-      endIndex={endIndex}
-      filteredTransactions={filteredTransactions}
-      getStatusColor={getStatusColor}
-    />
-  );
-}
+    if (activePage === "overview") {
+      return (
+        <OverviewPage
+          mockUserData={mockUserData}
+          mockMarketPrices={mockMarketPrices}
+          arbxCardImg={arbxCardImg}
+          arbxCoinImg={arbxCoinImg}
+          transactionFilter={transactionFilter}
+          setTransactionFilter={setTransactionFilter}
+          currentTransactions={currentTransactions}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          totalPages={totalPages}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          filteredTransactions={filteredTransactions}
+          getStatusColor={getStatusColor}
+        />
+      );
+    }
   };
 
   return (
@@ -217,21 +276,21 @@ export function UserDashboard() {
                 key={i}
                 src={arbxCoinImg}
                 alt="Coin"
-                initial={{ 
-                  y: -100, 
+                initial={{
+                  y: -100,
                   x: `${Math.random() * 100}vw`,
                   rotate: 0,
-                  opacity: 0.8
+                  opacity: 0.8,
                 }}
-                animate={{ 
-                  y: '110vh',
+                animate={{
+                  y: "110vh",
                   rotate: 360 * 3,
-                  opacity: 0
+                  opacity: 0,
                 }}
-                transition={{ 
+                transition={{
                   duration: 1,
                   delay: i * 0.03,
-                  ease: 'linear'
+                  ease: "linear",
                 }}
                 className="absolute w-8 h-8 md:w-12 md:h-12"
               />
@@ -245,7 +304,11 @@ export function UserDashboard() {
         onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         className="lg:hidden fixed top-6 left-6 z-[60] p-3 rounded-xl bg-gradient-to-br from-white/10 to-white/[0.02] backdrop-blur-2xl border border-white/10 hover:border-cyan-500/30 transition-all"
       >
-        {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {mobileSidebarOpen ? (
+          <X className="w-5 h-5" />
+        ) : (
+          <Menu className="w-5 h-5" />
+        )}
       </button>
 
       {/* Mobile Backdrop */}
@@ -264,37 +327,45 @@ export function UserDashboard() {
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ 
+        animate={{
           x: mobileSidebarOpen || window.innerWidth >= 1024 ? 0 : -300,
-          width: sidebarCollapsed ? 80 : 280 
+          width: sidebarCollapsed ? 80 : 280,
         }}
         className={`fixed top-0 left-0 bottom-0 z-50 bg-gradient-to-b from-[#0a0e27] via-[#0d1137] to-[#0a0e27] border-r border-white/10 backdrop-blur-xl ${
-          mobileSidebarOpen ? 'block' : 'hidden lg:block'
+          mobileSidebarOpen ? "block" : "hidden lg:block"
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="p-6 border-b border-white/10" 
-             onClick={() => navigate("/")}>
+          <div
+            className="p-6 border-b border-white/10"
+            onClick={() => navigate("/")}
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-b flex items-center justify-center shadow-lg flex-shrink-0">
                 <div className="w-10 h-10  rounded-full flex items-center justify-center">
-                    <img
-                   src={Logo}
-                  alt="Arbigrow Logo"
-                  className="w-10 h-10 object-contain"
-                 />
-                   <motion.div 
+                  <img
+                    src={Logo}
+                    alt="Arbigrow Logo"
+                    className="w-10 h-10 object-contain"
+                  />
+                  <motion.div
                     className="w-1.5 h-1.5 bg-white rounded-full"
                     animate={{ scale: [1, 1.3, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   />
                 </div>
               </div>
               {!sidebarCollapsed && (
                 <div>
                   <div className="font-bold text-white">ArbiGrow</div>
-                  <div className="text-[10px] text-cyan-400/80 uppercase tracking-wider">User Portal</div>
+                  <div className="text-[10px] text-cyan-400/80 uppercase tracking-wider">
+                    User Portal
+                  </div>
                 </div>
               )}
             </div>
@@ -328,10 +399,10 @@ export function UserDashboard() {
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activePage === page.id
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+                    ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
                     : page.comingSoon
-                    ? 'text-gray-600 cursor-default'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? "text-gray-600 cursor-default"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <page.icon className="w-5 h-5 flex-shrink-0" />
@@ -345,7 +416,9 @@ export function UserDashboard() {
                         </span>
                       )}
                     </div>
-                    <div className={`text-xs ${activePage === page.id ? 'text-white/70' : 'text-gray-500'}`}>
+                    <div
+                      className={`text-xs ${activePage === page.id ? "text-white/70" : "text-gray-500"}`}
+                    >
                       {page.description}
                     </div>
                   </div>
@@ -374,10 +447,15 @@ export function UserDashboard() {
       </motion.aside>
 
       {/* Main Content */}
-      <div 
+      <div
         className={`relative z-10 transition-all duration-300`}
-        style={{ 
-          marginLeft: window.innerWidth >= 1024 ? (sidebarCollapsed ? '80px' : '280px') : '0'
+        style={{
+          marginLeft:
+            window.innerWidth >= 1024
+              ? sidebarCollapsed
+                ? "80px"
+                : "280px"
+              : "0",
         }}
       >
         {renderPageContent()}
