@@ -126,7 +126,8 @@ const OverviewPage = ({
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.3 }}
            className="relative"
-         >
+         >  
+         {/* Add card Text */ }
            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-blue-600/5 to-cyan-600/5 p-6 md:p-8">
              {/* Card Image */}
        
@@ -255,7 +256,7 @@ const OverviewPage = ({
                      setTransactionFilter(e.target.value);
                      setCurrentPage(1);
                    }}
-                   className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none"
+                   className="px-4 py-2 rounded-lg bg-[#0A122C] border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none"
                  >
                    <option value="All">All Transactions</option>
                    <option value="Deposit">Deposits</option>

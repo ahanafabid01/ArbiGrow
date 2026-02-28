@@ -36,6 +36,8 @@ import { useNavigate } from 'react-router-dom';
 import ReferralPage from '../component/user/ReferralPage.jsx';
 import ProfilePage from '../component/user/ProfilePage.jsx';
 import OverviewPage from '../component/user/OverviewPage.jsx';
+import useUserStore from '../store/userStore.js';
+import { getAllUsers } from '../api/admin.api.js';
 
 // Mock data for market prices
   
@@ -50,15 +52,39 @@ export function UserDashboard() {
   const [transactions] = useState(generateMockTransactions());
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
+   const [user, setuUsers] = useState();
   const navigate = useNavigate();
   const transactionsPerPage = 50;
 
-  useEffect(() => {
-    // Hide coin rain animation after 1 second
-    const timer = setTimeout(() => {
-      setShowCoinRain(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+   useEffect(() => {
+    const fetchUsers = async () => {
+      const token = useUserStore.getState().token;
+       console.log("Token in fetchUsers:", token);
+      if (!token) return;
+
+      try {
+        const resData = await getAllUsers(token);
+        console.log("Fetched users:", resData);
+        if (resData?.status === 200) {
+          // ✅ Save users in state
+          const usersArray = resData.data?.users || [];
+          setuUsers(usersArray);
+          // console.log("Users array:", usersArray);
+        } else {
+          console.error(
+            "Failed to fetch users: ",
+            resData?.message || "Unknown error",
+          );
+        }
+        // setUsers(usersArray);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        // setLoading(false);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   const userPages = [
