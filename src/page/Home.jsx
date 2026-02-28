@@ -5,7 +5,7 @@ import ExecutiveSummary from "../component/ExecutiveSummary";
 import TechnicalArchitecture from "../component/TechnicalArchitecture";
 import CoreFeatures from "../component/CoreFeatures";
 import SecurityAudit from "../component/SecurityAudit";
-import Roadmap from "./RoadMap";
+import Roadmap from "./Roadmap.jsx";
 import Legal from "../component/Legal";
 import Founders from "../component/Founder";
 import Privacy from "../component/Privachy";
