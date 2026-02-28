@@ -1,8 +1,12 @@
 import { motion } from "motion/react";
 import { UserCircle, Check, Lock, Award } from "lucide-react";
+import useUserStore from "../../store/userStore";
+import { useNavigate } from "react-router-dom";
 
-const ProfilePage = ({ mockUserData }) => {
-  
+const ProfilePage = () => {
+   const navigate = useNavigate();
+    const {user} =useUserStore();
+    // console.log(user)
     return (
            <div className="p-4 md:p-6 space-y-5">
              {/* Page Header */}
@@ -29,15 +33,15 @@ const ProfilePage = ({ mockUserData }) => {
                      </div>
                      <div>
                        <div className="flex items-center gap-2">
-                         <h2 className="text-lg md:text-xl font-bold text-white">{mockUserData.fullName}</h2>
-                         {mockUserData.isVerified && (
+                         <h2 className="text-lg md:text-xl font-bold text-white">{user.full_name}</h2>
+                         {user.is_admin && (
                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-xs text-green-400">
                              <Check className="w-3 h-3" />
                              Verified
                            </span>
                          )}
                        </div>
-                       <p className="text-sm text-gray-400">@{mockUserData.username}</p>
+                       <p className="text-sm text-gray-400">@{user.username}</p>
                      </div>
                    </div>
                  </div>
@@ -52,7 +56,7 @@ const ProfilePage = ({ mockUserData }) => {
                    <div className="space-y-2">
                      <label className="text-sm text-gray-400">Full Name</label>
                      <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                       <p className="text-white">{mockUserData.fullName}</p>
+                       <p className="text-white">{user.full_name}</p>
                      </div>
                    </div>
    
@@ -60,7 +64,7 @@ const ProfilePage = ({ mockUserData }) => {
                    <div className="space-y-2">
                      <label className="text-sm text-gray-400">Username</label>
                      <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                       <p className="text-white">@{mockUserData.username}</p>
+                       <p className="text-white">@{user.username}</p>
                      </div>
                    </div>
    
@@ -68,7 +72,7 @@ const ProfilePage = ({ mockUserData }) => {
                    <div className="space-y-2">
                      <label className="text-sm text-gray-400">Email</label>
                      <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                       <p className="text-white">{mockUserData.email}</p>
+                       <p className="text-white">{user.email}</p>
                      </div>
                    </div>
    
@@ -76,7 +80,7 @@ const ProfilePage = ({ mockUserData }) => {
                    <div className="space-y-2">
                      <label className="text-sm text-gray-400">Phone</label>
                      <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                       <p className="text-white">{mockUserData.phone}</p>
+                       <p className="text-white">{user.phone_number}</p>
                      </div>
                    </div>
    
@@ -84,14 +88,16 @@ const ProfilePage = ({ mockUserData }) => {
                    <div className="space-y-2 md:col-span-2">
                      <label className="text-sm text-gray-400">Country</label>
                      <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
-                       <p className="text-white">{mockUserData.country}</p>
+                       <p className="text-white">{user.country}</p>
                      </div>
                    </div>
                  </div>
    
                  {/* Change Password Button */}
                  <div className="pt-4 border-t border-white/10">
-                   <button className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 flex items-center justify-center gap-2">
+                   <button 
+                    onClick={()=> navigate('/reset-password')} 
+                   className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 flex items-center justify-center gap-2">
                      <Lock className="w-4 h-4" />
                      Change Password
                    </button>
@@ -141,10 +147,7 @@ const ProfilePage = ({ mockUserData }) => {
              </div>
            </div>
 
-            
-
          );
-     
 };
 
 export default ProfilePage;

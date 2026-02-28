@@ -10,12 +10,15 @@ import {
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { resetPassword } from "../api/auth.api.js";
+import useUserStore from "../store/userStore.js";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
-  const varificationtoken = new URLSearchParams(location.search).get("token");
-
+const urlToken = new URLSearchParams(location.search).get("token");
+const storeToken = useUserStore.getState().token;
+const varificationtoken = urlToken && urlToken.trim() !== "" ? urlToken : storeToken;
+      console.log("From reset password:",varificationtoken)
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +26,7 @@ export default function ResetPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-
+    const { logout } = useUserStore();
   // Password strength indicators
   const passwordRequirements = {
     minLength: password.length >= 8,
@@ -62,8 +65,13 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const res = await resetPassword(password, varificationtoken); // API call
-      setIsSuccess(true);
+      const res = await resetPassword(password, varificationtoken);
+       if(res?.status === 200){
+       setIsSuccess(true)
+       logout();
+       }
+      //  console.log("Res Data:",res) // API call
+      
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     } finally {
