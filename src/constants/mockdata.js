@@ -5,24 +5,24 @@ export const mockMarketPrices = {
 };
 
 // // Mock user data
-// export const mockUserData = {
-//   fullName: 'John Anderson',
-//   username: 'john_anderson',
-//   email: 'john.anderson@arbigrow.com',
-//   phone: '+1 (555) 123-4567',
-//   country: 'United States',
-//   isVerified: true,
-//   referralLink: 'https://arbigrow.com/ref/john_anderson',
-//   wallets: {
-//     main: 1250.50,
-//     deposit: 5000.00,
-//     withdraw: 1850.75,
-//     referral: 420.30,
-//     generation: 680.90,
-//     arbx: 100.00,
-//     mining: 25.50
-//   }
-// };
+export const mockUserData = {
+  fullName: "John Anderson",
+  username: "john_anderson",
+  email: "john.anderson@arbigrow.com",
+  phone: "+1 (555) 123-4567",
+  country: "United States",
+  isVerified: true,
+  referralLink: "https://arbigrow.com/ref/john_anderson",
+  wallets: {
+    main: 1250.5,
+    deposit: 5000.0,
+    withdraw: 1850.75,
+    referral: 420.3,
+    generation: 680.9,
+    arbx: 100.0,
+    mining: 25.5,
+  },
+};
 
 // Fixed referral data — all 5 levels with real examples
 export const fixedReferralData = [

@@ -44,7 +44,7 @@ const ReferralPage = ({
       </div>
 
       {/* Referral Stats — 2 compact cards */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* <div className="grid grid-cols-2 gap-4">
         {[
           {
             icon: Users,
@@ -79,7 +79,7 @@ const ReferralPage = ({
             </div>
           </motion.div>
         ))}
-      </div>
+      </div> */}
 
       {/* Referral Link Box */}
       <motion.div

@@ -21,7 +21,7 @@ export default function UserDetailModal({
   isUpdating,
   updateMessage,
 }) {
-  console.log("user from modal", selectedUser);
+  // console.log("user from modal", selectedUser);
 
   const documentImages = [
     selectedUser?.kyc?.front_image_url,

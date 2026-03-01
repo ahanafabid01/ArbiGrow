@@ -33,7 +33,7 @@ import arbxCoinImg from "../assets/Coin.png";
 import Logo from "../assets/Arbigrow-Logo.png";
 import {
   mockMarketPrices,
-  // mockUserData,
+  mockUserData,
   fixedReferralData,
   generateMockTransactions,
 } from "../constants/mockdata.js";

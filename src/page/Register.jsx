@@ -1,4 +1,4 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../component/Navbar";
 import Button from "../component/Button";
 import { registerUser } from "../api/auth.api.js";
@@ -11,7 +11,6 @@ export default function RegisterForm() {
   const setUser = useUserStore((state) => state.setUser);
   const setToken = useUserStore((state) => state.setToken);
   const [isReferralLocked, setIsReferralLocked] = useState(false);
- 
 
   const [agree, setAgree] = useState(false);
 
@@ -20,15 +19,15 @@ export default function RegisterForm() {
     full_name: "",
     referral_code: "",
     password: "",
-    confirm_password: "", 
+    confirm_password: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false); // NEW
-  const [showPassword, setShowPassword] = useState(false); 
-   const [showConfirmPassword, setShowConfirmPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [searchParams] = useSearchParams();
 
   // referral code from URL
@@ -39,7 +38,7 @@ export default function RegisterForm() {
         ...prev,
         referral_code: refCodeFromURL,
       }));
-       setIsReferralLocked(true); 
+      setIsReferralLocked(true);
     }
   }, [searchParams]);
 
@@ -56,7 +55,7 @@ export default function RegisterForm() {
   const handleAgree = (e) => {
     setAgree(e.target.checked);
   };
-    
+
   const validateForm = () => {
     const emailRegex = /^\S+@\S+\.\S+$/;
 
@@ -64,26 +63,25 @@ export default function RegisterForm() {
     if (!emailRegex.test(formData.email)) return "Invalid email format";
     if (!formData.full_name.trim()) return "Name is required";
     if (!formData.referral_code.trim()) return "Referral code is required";
-    if (!formData.password.trim())
-  return "Password is required";
+    if (!formData.password.trim()) return "Password is required";
 
-  if (formData.password.length < 8)
-  return "Password must be at least 8 characters";
+    if (formData.password.length < 8)
+      return "Password must be at least 8 characters";
 
-   if (!/[A-Z]/.test(formData.password))
-  return "Password must include an uppercase letter";
+    if (!/[A-Z]/.test(formData.password))
+      return "Password must include an uppercase letter";
 
-  if (!/[a-z]/.test(formData.password))
-  return "Password must include a lowercase letter";
+    if (!/[a-z]/.test(formData.password))
+      return "Password must include a lowercase letter";
 
-   if (!/[0-9]/.test(formData.password))
-    return "Password must include a number";
+    if (!/[0-9]/.test(formData.password))
+      return "Password must include a number";
 
-   if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password))
-  return "Password must include a special character";
-   if (formData.password !== formData.confirm_password)
-    return "Passwords do not match";
-    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password))
+      return "Password must include a special character";
+    if (formData.password !== formData.confirm_password)
+      return "Passwords do not match";
+
     if (!agree) return "You must agree to terms & conditions";
     return null;
   };
@@ -116,10 +114,9 @@ export default function RegisterForm() {
       setTimeout(() => {
         navigate("/login");
       }, 1500);
-
     } catch (error) {
       const res = error.response;
-      console.log("❌ FULL ERROR OBJECT:", error);
+      // console.log("❌ FULL ERROR OBJECT:", error);
       setIsSuccess(false);
 
       if (!res) {
@@ -140,9 +137,9 @@ export default function RegisterForm() {
         return;
       }
 
-      const msg = res.data?.message || res.data?.detail || "Something went wrong";
+      const msg =
+        res.data?.message || res.data?.detail || "Something went wrong";
       setMessage(msg);
-
     } finally {
       setLoading(false);
     }
@@ -154,9 +151,7 @@ export default function RegisterForm() {
     <>
       <Navbar />
       <div className="min-h-screen flex items-center justify-center bg-[#0A122C] px-4 pt-[120px] sm:pt-20 md:pt-28 lg:pt-36">
-
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 shadow-lg rounded-lg w-full max-w-md p-3 hover:shadow-blue-900/50 transition-shadow duration-600">
-
           {/* Icon */}
           <div className="flex flex-col items-center justify-center">
             <h1 className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white text-xl sm:text-2xl shadow-lg shadow-blue-500/10 hover:shadow-blue-500/40 hover:scale-105 transition-all duration-300">
@@ -169,7 +164,6 @@ export default function RegisterForm() {
           </h2>
 
           <form className="space-y-4 p-8 text-black" onSubmit={handleSubmit}>
-            
             <div>
               <input
                 type="email"
@@ -184,40 +178,40 @@ export default function RegisterForm() {
                 </p>
               )}
             </div>
-               {/* name */}
-               
+            {/* name */}
+
             <div>
               <input
-               type="text"
-               name="full_name"
-               value={formData.full_name}
-               placeholder="Enter your full name"
-               onChange={handleChange}
-               className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black"
-               />
+                type="text"
+                name="full_name"
+                value={formData.full_name}
+                placeholder="Enter your full name"
+                onChange={handleChange}
+                className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black"
+              />
               {errors.find((e) => e.field === "full_name") && (
                 <p className="text-xs text-red-500 mt-1">
                   {errors.find((e) => e.field === "full_name").message}
                 </p>
               )}
             </div>
-            
-                    {/* referral code */}
+
+            {/* referral code */}
             <div>
               <input
-               type="text"
-               name="referral_code"
-               value={formData.referral_code}
-               placeholder="Enter referral code"
-               readOnly={isReferralLocked}
-               onChange={handleChange}
-               className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black"
-               />
-                {isReferralLocked && (
-                 <p className="text-xs text-[#00CFF5] mt-1">
-               Referral applied from invitation link
-               </p>
-               )}
+                type="text"
+                name="referral_code"
+                value={formData.referral_code}
+                placeholder="Enter referral code"
+                readOnly={isReferralLocked}
+                onChange={handleChange}
+                className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-black"
+              />
+              {isReferralLocked && (
+                <p className="text-xs text-[#00CFF5] mt-1">
+                  Referral applied from invitation link
+                </p>
+              )}
               {errors.find((e) => e.field === "referral_code") && (
                 <p className="text-xs text-red-500 mt-1">
                   {errors.find((e) => e.field === "referral_code").message}
@@ -233,13 +227,13 @@ export default function RegisterForm() {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
-                <button
-              type="button"
-             onClick={() => setShowPassword(!showPassword)}
-             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
-             >
-           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-           </button>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
               {errors.find((e) => e.field === "password") && (
                 <p className="text-xs text-red-500 mt-1">
                   {errors.find((e) => e.field === "password").message}
@@ -255,13 +249,13 @@ export default function RegisterForm() {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
-               <button
-              type="button"
-             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
-             >
-           {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-           </button>
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#4171AD] transition"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             {/* Checkbox */}
@@ -275,12 +269,12 @@ export default function RegisterForm() {
               />
               <p className="text-gray-400">
                 I agree to the{" "}
-                <a className="text-[#00CFF5] cursor-pointer hover:underline"
-                 href="/terms-conditions"
-                 rel="noopener noreferrer"
-
-                // onClick={() => navigate('/terms-conditions')}
-                target="_blank"
+                <a
+                  className="text-[#00CFF5] cursor-pointer hover:underline"
+                  href="/terms-conditions"
+                  rel="noopener noreferrer"
+                  // onClick={() => navigate('/terms-conditions')}
+                  target="_blank"
                 >
                   Terms & Conditions
                 </a>
@@ -299,7 +293,11 @@ export default function RegisterForm() {
             )}
 
             <div className="flex justify-center pt-1">
-              <Button type="submit" disabled={isButtonDisabled} variant="gradient">
+              <Button
+                type="submit"
+                disabled={isButtonDisabled}
+                variant="gradient"
+              >
                 {loading ? "Registering..." : "Register"}
               </Button>
             </div>

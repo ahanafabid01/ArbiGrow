@@ -21,7 +21,7 @@ export default function EmailVerificationPage() {
         // ✅ Bearer token header diye verify call
         const res = await verifyEmail(token);
         // console.log("Token for verification:", token);
-        console.log("Response from verifyEmail API", res);
+        // console.log("Response from verifyEmail API", res);
         if (res?.status === 200) {
           setStatus("success");
         } else {
@@ -194,11 +194,9 @@ function FailedState({ isExpired, token }) {
         )}
 
         <Link to="/">
-           <Button variant="frosted">
-            Return to Homepage
-            </Button>
+          <Button variant="frosted">Return to Homepage</Button>
         </Link>
-       </div>
+      </div>
 
       <div className="flex items-center justify-center gap-2 border-t border-white/5 pt-6">
         <Shield className="h-4 w-4 text-gray-400" />

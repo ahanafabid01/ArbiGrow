@@ -160,7 +160,7 @@ export const Hero = () => {
             variant="frosted"
             fullWidth={false}
             className="px-6 py-3"
-            onClick={() => window.open("/public/whitepaper.pdf", "_blank")}
+            onClick={() => window.open("/whitepaper.pdf", "_blank")}
           >
             Read Technical Whitepaper
           </Button>

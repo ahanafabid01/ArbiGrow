@@ -23,7 +23,7 @@ const OverviewPage = ({
 }) => {
   const { user, setUser } = useUserStore();
 
-  console.log("global user store from OverviewPage", user);
+  // console.log("global user store from OverviewPage", user);
   useEffect(() => {
     const loadUser = async () => {
       try {

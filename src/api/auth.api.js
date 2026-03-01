@@ -1,6 +1,7 @@
 import api from "./axiosInstance.js";
 
 export const registerUser = (data) => {
+  // console.log(data);
   return api.post("v1/auth/signup", data);
 };
 

@@ -15,10 +15,11 @@ import useUserStore from "../store/userStore.js";
 export default function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
-const urlToken = new URLSearchParams(location.search).get("token");
-const storeToken = useUserStore.getState().token;
-const varificationtoken = urlToken && urlToken.trim() !== "" ? urlToken : storeToken;
-      console.log("From reset password:",varificationtoken)
+  const urlToken = new URLSearchParams(location.search).get("token");
+  const storeToken = useUserStore.getState().token;
+  const varificationtoken =
+    urlToken && urlToken.trim() !== "" ? urlToken : storeToken;
+  // console.log("From reset password:",varificationtoken)
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +27,7 @@ const varificationtoken = urlToken && urlToken.trim() !== "" ? urlToken : storeT
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-    const { logout } = useUserStore();
+  const { logout } = useUserStore();
   // Password strength indicators
   const passwordRequirements = {
     minLength: password.length >= 8,
@@ -66,12 +67,11 @@ const varificationtoken = urlToken && urlToken.trim() !== "" ? urlToken : storeT
 
     try {
       const res = await resetPassword(password, varificationtoken);
-       if(res?.status === 200){
-       setIsSuccess(true)
-       logout();
-       }
+      if (res?.status === 200) {
+        setIsSuccess(true);
+        logout();
+      }
       //  console.log("Res Data:",res) // API call
-      
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     } finally {
