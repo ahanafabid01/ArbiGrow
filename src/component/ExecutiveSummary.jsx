@@ -24,7 +24,7 @@ export default function ExecutiveSummary() {
               <span className="text-sm font-semibold text-blue-400 uppercase tracking-wider">Executive Summary</span>
             </div>
             
-            <p className="text-xl leading-relaxed text-gray-300">
+            <p className="text-[20px] leading-relaxed text-gray-300">
               <span className="text-2xl font-semibold text-white">ArbiGrow</span> represents a paradigm shift in decentralized finance infrastructure, 
               combining <span className="text-cyan-400 font-medium">advanced artificial intelligence</span> with the robust security and efficiency of 
               <span className="text-blue-400 font-medium"> Arbitrum Layer-2 technology</span>. Our platform delivers institutional-grade automated trading 
@@ -42,7 +42,7 @@ export default function ExecutiveSummary() {
               ].map((item, idx) => (
                 <div key={idx} className="text-center p-4 rounded-xl bg-white/5 border border-white/10">
                   <div className="text-sm text-gray-400 mb-1">{item.label}</div>
-                  <div className="font-semibold text-white">{item.value}</div>
+                  <div className="font-semibold text-[14px] text-white">{item.value}</div>
                 </div>
               ))}
             </div>

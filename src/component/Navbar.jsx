@@ -163,7 +163,7 @@ export default function Navbar() {
                     {/* Admin Only Button */}
                     {is_admin && (
                       <Button
-                        icon={<LayoutDashboard />}
+                        icon={<Shield />}
                         variant="frosted"
                         onClick={() => navigate("/admin-dashboard")}
                       >

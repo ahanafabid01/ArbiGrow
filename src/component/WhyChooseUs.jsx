@@ -26,7 +26,7 @@ export function WhyChooseUs() {
   ];
 
   return (
-    <section className="relative py-24 px-4 overflow-hidden">
+    <section className="relative py-24 px-2 sm:px-4 lg:px-6 overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-0 w-[600px] h-[600px] bg-cyan-500/3 rounded-full blur-3xl"></div>
