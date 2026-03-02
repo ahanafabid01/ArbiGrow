@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import UserDetailModal from "./UserDetailModal.jsx";
 import useUserStore from "../../store/userStore.js";
@@ -19,6 +19,8 @@ export default function UserManagement({ users, setUsers }) {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isBulkApproving, setIsBulkApproving] = useState(false);
+  const [bulkUpdateMessage, setBulkUpdateMessage] = useState("");
 
   const { userDetails, setUserDetails } = useUserStore();
   
@@ -28,33 +30,32 @@ export default function UserManagement({ users, setUsers }) {
     setIsUpdating(false);
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const token = useUserStore.getState().token;
-      if (!token) return;
+  const fetchUsers = useCallback(async () => {
+    const token = useUserStore.getState().token;
+    if (!token) return;
 
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        const res = await getAllUsers(token, {
-          page: currentPage,
-          search: searchQuery,
-          status: statusFilter,
-        });
+      const res = await getAllUsers(token, {
+        page: currentPage,
+        search: searchQuery,
+        status: statusFilter,
+      });
 
-        // Adjust based on backend structure
-        setUsers(res?.data?.users || []);
-        setTotalPages(Math.ceil((res?.data?.total || 0) / 50));
-        setTotalUsers(res?.data?.total || 0);
-      } catch (err) {
-        console.error("Failed to fetch users", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
+      setUsers(res?.data?.users || []);
+      setTotalPages(Math.ceil((res?.data?.total || 0) / 50));
+      setTotalUsers(res?.data?.total || 0);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    } finally {
+      setLoading(false);
+    }
   }, [currentPage, searchQuery, statusFilter, setUsers]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleUserClick = async (user) => {
     setSelectedUser(user);
@@ -124,6 +125,122 @@ export default function UserManagement({ users, setUsers }) {
     }
   };
 
+  const isQualifiedField = (value) => {
+    if (value === null || value === undefined) return false;
+    const normalized = String(value).trim();
+    return normalized !== "" && normalized.toLowerCase() !== "n/a";
+  };
+
+  const getAllPendingUsers = async (token) => {
+    const pendingUsers = [];
+    let page = 1;
+    const limitPerPage = 50;
+    const maxPages = 500;
+
+    while (page <= maxPages) {
+      const res = await getAllUsers(token, {
+        page,
+      });
+
+      const pageUsers = res?.data?.users || [];
+      if (!pageUsers.length) break;
+
+      pendingUsers.push(
+        ...pageUsers.filter((user) => user?.status?.toLowerCase() === "pending"),
+      );
+
+      if (pageUsers.length < limitPerPage) break;
+      page += 1;
+    }
+
+    return pendingUsers;
+  };
+
+  const handleApproveQualified = async () => {
+    const token = useUserStore.getState().token;
+    if (!token || isBulkApproving) return;
+
+    try {
+      setIsBulkApproving(true);
+      setBulkUpdateMessage("");
+
+      const pendingUsers = await getAllPendingUsers(token);
+
+      if (!pendingUsers.length) {
+        setBulkUpdateMessage("No pending users found.");
+        return;
+      }
+
+      const detailResults = await Promise.allSettled(
+        pendingUsers.map((u) => getUser(token, u.id)),
+      );
+
+      const qualifiedUsers = detailResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value)
+        .filter((details) => {
+          const kyc = details?.kyc;
+          return (
+            details?.id &&
+            kyc?.status === "pending" &&
+            isQualifiedField(kyc?.document_type) &&
+            isQualifiedField(kyc?.country) &&
+            isQualifiedField(kyc?.phone_number)
+          );
+        });
+
+      if (!qualifiedUsers.length) {
+        setBulkUpdateMessage(
+          "No qualified pending users found (Document Type/Country/Phone required).",
+        );
+        await fetchUsers();
+        return;
+      }
+
+      const approveResults = await Promise.allSettled(
+        qualifiedUsers.map((u) => updateKYCStatus(token, u.id, "approved")),
+      );
+
+      const approvedCount = approveResults.filter(
+        (result) => result.status === "fulfilled",
+      ).length;
+      const failedCount = qualifiedUsers.length - approvedCount;
+      const skippedCount = pendingUsers.length - qualifiedUsers.length;
+
+      setBulkUpdateMessage(
+        `Approved ${approvedCount} qualified pending user(s). Skipped ${skippedCount} unqualified user(s).${
+          failedCount > 0 ? ` Failed ${failedCount} update(s).` : ""
+        }`,
+      );
+
+      if (
+        selectedUser &&
+        qualifiedUsers.some((qualifiedUser) => qualifiedUser.id === selectedUser.id)
+      ) {
+        setSelectedUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "approved",
+                kyc: {
+                  ...prev.kyc,
+                  status: "approved",
+                },
+              }
+            : prev,
+        );
+        setUserStatus("approved");
+      }
+
+      await fetchUsers();
+    } catch (error) {
+      console.error("Failed to bulk approve qualified users:", error);
+      setBulkUpdateMessage("Failed to approve qualified users.");
+    } finally {
+      setIsBulkApproving(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "approved":
@@ -142,15 +259,38 @@ export default function UserManagement({ users, setUsers }) {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          User{" "}
-          <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-            Management
-          </span>
-        </h1>
-        <p className="text-gray-400">Manage all users and verifications</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            User{" "}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Management
+            </span>
+          </h1>
+          <p className="text-gray-400">Manage all users and verifications</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleApproveQualified}
+          disabled={isBulkApproving || loading}
+          className="w-full md:w-auto px-5 py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 text-white border border-emerald-400/30 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+        >
+          {isBulkApproving ? "Approving..." : "Approve Qualified"}
+        </button>
       </div>
+
+      {bulkUpdateMessage && (
+        <div className="mb-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">
+          {bulkUpdateMessage}
+        </div>
+      )}
+
+      {updateMessage && !selectedUser && (
+        <div className="mb-4 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-gray-200">
+          {updateMessage}
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="mb-6 flex flex-col md:flex-row gap-4">

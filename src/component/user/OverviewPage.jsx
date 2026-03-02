@@ -1,4 +1,5 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import { createPortal } from "react-dom";
 import {
   Wallet,
   Download,
@@ -10,9 +11,11 @@ import {
   ChevronRight,
   Pickaxe,
   Lock,
+  Info,
+  X,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { refreshUserStore } from "../../api/user.api.js";
 
 const OverviewPage = ({
@@ -22,6 +25,7 @@ const OverviewPage = ({
   arbxCoinImg,
 }) => {
   const { user, setUser } = useUserStore();
+  const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
 
   // console.log("global user store from OverviewPage", user);
   useEffect(() => {
@@ -146,30 +150,43 @@ const OverviewPage = ({
             balance: Number(user?.main_wallet ?? 0),
             description: "Usable Balance",
             icon: Wallet,
+            currency: "USDT",
           },
           {
             label: "Deposit Wallet",
             balance: Number(user?.deposit_wallet ?? 0),
             description: "Total Deposited",
             icon: Download,
+            currency: "USDT",
           },
           {
             label: "Withdraw Wallet",
             balance: Number(user?.withdraw_wallet ?? 0),
             description: "Total Withdrawn",
             icon: Upload,
+            currency: "USDT",
           },
           {
             label: "Referral Wallet",
             balance: Number(user?.referral_wallet ?? 0),
             description: "Referral Earnings",
             icon: Users,
+            currency: "USDT",
           },
           {
             label: "Generation Wallet",
             balance: Number(user?.generation_wallet ?? 0),
             description: "Generation Bonus",
             icon: TrendingUp,
+            currency: "USDT",
+          },
+          {
+            label: "ARBX Wallet",
+            balance: 20000,
+            description: "Arbitrum One",
+            icon: Wallet,
+            currency: "ARBX",
+            hasInfo: true,
           },
         ].map((wallet, idx) => (
           <motion.div
@@ -183,8 +200,20 @@ const OverviewPage = ({
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-600/20 flex items-center justify-center">
                 <wallet.icon className="w-5 h-5 text-cyan-400" />
               </div>
-              <div className="text-xs px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                USDT
+              <div className="flex items-center gap-2">
+                {wallet.hasInfo && (
+                  <button
+                    type="button"
+                    onClick={() => setIsTokenInfoOpen(true)}
+                    className="w-7 h-7 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:text-white hover:border-cyan-400 transition-colors flex items-center justify-center"
+                    aria-label="Open token information"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
+                )}
+                <div className="text-xs px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  {wallet.currency}
+                </div>
               </div>
             </div>
             <div className="text-sm text-gray-400 mb-1">{wallet.label}</div>
@@ -196,122 +225,120 @@ const OverviewPage = ({
         ))}
       </div>
 
-      {/* ARBX Premium Card Section */}
+      {/* Token Information Modal */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {isTokenInfoOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-2 sm:p-4 md:p-6 flex items-center justify-center"
+                onClick={() => setIsTokenInfoOpen(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 18, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={(event) => event.stopPropagation()}
+                  className="w-full max-w-3xl rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#151d45] to-[#10183a] border border-white/10 p-4 sm:p-5 md:p-8 max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] overflow-y-auto"
+                >
+                  <div className="flex items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                      Token Information
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsTokenInfoOpen(false)}
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-white/20 text-gray-300 hover:text-white hover:border-cyan-400/60 transition-colors flex items-center justify-center shrink-0"
+                      aria-label="Close token information popup"
+                    >
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 border-b border-white/10 pb-4 sm:pb-5">
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Token Name</div>
+                      <div className="text-white font-semibold">Arbitrax AI</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">
+                        Token Symbol
+                      </div>
+                      <div className="text-white font-semibold">ARBX</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Network</div>
+                      <div className="text-white font-semibold">
+                        Arbitrum One (ERC-20)
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Total Supply</div>
+                      <div className="text-white font-semibold">
+                        1,000,000,000 ARBX
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pt-4 sm:pt-5 mb-5 sm:mb-6">
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">Utility</div>
+                      <div className="text-white">
+                        Governance, Arbitrage Fee Discounts, and Staking Rewards
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400 mb-1">
+                        Token Listed
+                      </div>
+                      <div className="text-white">
+                        Socket, Rango, Sonarwatch, Metamask
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsTokenInfoOpen(false)}
+                    className="w-full sm:w-auto px-6 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:text-white hover:bg-cyan-500/30 transition-colors"
+                  >
+                    Close
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* ARBX Description */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="relative"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-blue-600/10 border border-cyan-500/20 rounded-xl p-6"
       >
-        {/* Add card Text */}
-
-        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-blue-600/5 to-cyan-600/5 p-6 md:p-8">
-          {/* Card Image */}
-          <div className="pl-3 font-bold text-xl">Arbigrow Wallet</div>
-          <div className="relative max-w-md mx-auto mb-6">
-            <img
-              src={arbxCardImg}
-              alt="ARBX Card"
-              className="w-full h-[220px] md:h-[260px] object-cover rounded-xl"
-            />
-
-            {/* Bottom to Top Animation Overlay */}
-            <div
-              className="absolute inset-0 flex flex-col items-start justify-end 
-                   px-4 pb-[45px] pl-[78px] sm:pl-[95px] sm:pb-[30px] md:px-6 md:pb-[45px] md:pl-[100px]"
-            >
-              <div className="text-white  text-sm md:text-xl drop-shadow-lg ml-1">
-                {user.full_name.toUpperCase()}
-              </div>
-
-              <div className="flex items-center gap-1 mt-0 sm:mt-2">
-                <img
-                  src={arbxCoinImg}
-                  alt="ARBX"
-                  className="w-5 h-5 sm:w-6 sm:h-6"
-                />
-                <div className="text-white text-[10px] sm:text-[12px] md:text-[12px] drop-shadow-lg">
-                  {Number(user.arbx_wallet).toFixed(7)} ARBX
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Token Information Panel */}
-          <div className="bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-xl p-6 mb-6">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Token Information
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                {/* <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                     <img src={arbxCoinImg} alt="ARBX" className="w-6 h-6" />
-                   </div> */}
-                <div>
-                  <div className="text-xs text-gray-400">Token Name</div>
-                  <div className="text-white font-semibold">Arbitrax AI</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                     <span className="text-blue-400 font-bold">ARBX</span>
-                   </div> */}
-                <div>
-                  <div className="text-xs text-gray-400">Token Symbol</div>
-                  <div className="text-white font-semibold">ARBX</div>
-                </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Network</div>
-                <div className="text-white font-semibold">
-                  Arbitrum One (ERC-20)
-                </div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Total Supply</div>
-                <div className="text-white font-semibold">
-                  1,000,000,000 ARBX
-                </div>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6 border-t border-white/10 pt-4">
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Utility</div>
-                <div className="text-white">
-                  Governance, Arbitrage Fee Discounts, and Staking Rewards
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Token Listed</div>
-                <div className="text-white">
-                  Socket, Rango , Sonarwatch , Metamask
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ARBX Description */}
-          <div className="bg-gradient-to-r from-blue-600/10 via-cyan-500/10 to-blue-600/10 border border-cyan-500/20 rounded-xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3">
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                ARBX: The Power of AI on Arbitrum
-              </span>
-            </h3>
-            <p className="text-gray-300 mb-3">
-              These {Number(user.arbx_wallet).toFixed(7)} ARBX tokens you earned
-              are not just a number, they are a part of tomorrow's global
-              arbitrage ecosystem.
-            </p>
-            <p className="text-gray-300">
-              According to our launching roadmap, these tokens will be tradable
-              very soon.{" "}
-              <span className="text-cyan-400 font-semibold">
-                Grow your network, accumulate more tokens!
-              </span>
-            </p>
-          </div>
-        </div>
+        <h3 className="text-xl font-bold text-white mb-3">
+          <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            ARBX: The Power of AI on Arbitrum
+          </span>
+        </h3>
+        <p className="text-gray-300 mb-3">
+          These {Number(user.arbx_wallet).toFixed(7)} ARBX tokens you earned
+          are not just a number, they are a part of tomorrow&apos;s global
+          arbitrage ecosystem.
+        </p>
+        <p className="text-gray-300">
+          According to our launching roadmap, these tokens will be tradable very
+          soon.{" "}
+          <span className="text-cyan-400 font-semibold">
+            Grow your network, accumulate more tokens!
+          </span>
+        </p>
       </motion.div>
 
       {/* ARBX Mining Wallet */}
