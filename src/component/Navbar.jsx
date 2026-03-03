@@ -9,6 +9,14 @@ import {
   ChevronDown,
   LayoutDashboard,
   Shield,
+  Facebook,
+
+  Linkedin,
+  Twitter,
+  Send,
+  Youtube,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
@@ -296,7 +304,146 @@ export default function Navbar() {
                     </motion.a>
                   ))}
                 </div>
+                  {/* Chat With Us */}
+<div className="mb-6">
+     <a
+    href="https://t.me/ArbigrowOfficial"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="block"
+  >
 
+  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+    <MessageCircle className="w-5 h-5 text-cyan-400" />
+    <span className="text-sm text-gray-300">
+      Chat with us. <span className="text-green-400">We are online!</span>
+    </span>
+  </button>
+  </a>
+</div>
+   {/* Footer Section */}
+<div className="mt-10 pt-6 border-t border-white/10">
+
+  {/* Follow Text */}
+  <p className="text-xs text-gray-400 mb-4">
+    Follow us on social media to find out the latest updates on our progress.
+  </p>
+
+  {/* Social Icons */}
+ {/* Social Icons */}
+<div className="flex gap-4 justify-center mt-6 mb-6">
+
+  {/* Facebook */}
+  <a
+    href="https://www.facebook.com/share/189Y6dLmQq/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-10 h-10 rounded-full bg-[#1877F2] 
+               flex items-center justify-center 
+               text-white
+               hover:scale-110 hover:shadow-lg 
+               hover:shadow-blue-500/40
+               transition-all duration-300"
+  >
+    <Facebook className="w-5 h-5" />
+  </a>
+
+  {/* Telegram */}
+  <a
+    href="https://t.me/ArbigrowOfficial"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-10 h-10 rounded-full bg-[#229ED9] 
+               flex items-center justify-center 
+               text-white
+               hover:scale-110 hover:shadow-lg 
+               hover:shadow-cyan-500/40
+               transition-all duration-300"
+  >
+    <Send className="w-5 h-5" />
+  </a>
+
+  {/* YouTube */}
+  <a
+    href="https://youtube.com/@arbigrow-official?si=ucCCPJtcdebgkUfZ"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-10 h-10 rounded-full bg-[#FF0000] 
+               flex items-center justify-center 
+               text-white
+               hover:scale-110 hover:shadow-lg 
+               hover:shadow-red-500/40
+               transition-all duration-300"
+  >
+    <Youtube className="w-5 h-5" />
+  </a>
+
+  {/* Twitter (X) */}
+  <a
+    href="https://x.com/arbigrow"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-10 h-10 rounded-full bg-black 
+               flex items-center justify-center 
+               text-white
+               hover:scale-110 hover:shadow-lg 
+               hover:shadow-white/30
+               transition-all duration-300"
+  >
+    <Twitter className="w-5 h-5" />
+  </a>
+
+  {/* Mail */}
+  <a
+    href="mailto:arbigrow.official@gmail.com"
+    className="w-10 h-10 rounded-full bg-blue-600 
+               flex items-center justify-center 
+               text-white
+               hover:scale-110 hover:shadow-lg 
+               hover:shadow-blue-500/40
+               transition-all duration-300"
+  >
+    <Mail className="w-5 h-5" />
+  </a>
+
+</div>
+
+  {/* Copyright */}
+  <div className="text-[11px] text-gray-100 mb-4">
+    © {new Date().getFullYear()} ArbiGrow.com. All rights reserved.
+  </div>
+
+  {/* Footer Links */}
+<div className="flex justify-center items-center gap-4 text-[11px] text-gray-100 mt-4 mb-4">
+
+  <span
+    onClick={() => navigate("/terms-conditions")}
+    className="cursor-pointer  hover:text-cyan-400 transition"
+  >
+    Terms of Service
+  </span>
+
+  <span className="text-gray-600">|</span>
+
+  <span
+    onClick={() => navigate("/privacy-policy")}
+    className="cursor-pointer  hover:text-cyan-400 transition"
+  >
+    Privacy Policy
+  </span>
+
+  <span className="text-gray-600">|</span>
+
+  <span
+    onClick={() => navigate("/legal-information")}
+    className="cursor-pointer hover:text-cyan-400 transition"
+  >
+   Legal Information
+  </span>
+
+</div>
+</div>
+                 
                 {/* Mobile Action Buttons */}
                 {!isLoggedIn ? (
                   <div className="flex flex-col gap-2">
