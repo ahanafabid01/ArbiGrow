@@ -129,7 +129,7 @@ export default function FAQ() {
           </p>
           <Button
             onClick={() =>
-              window.open("https://t.me/ArbigrowOfficial", "_blank")
+              window.open("https://t.me/Arbigrow", "_blank")
             }
             variant="gradient"
             fullWidth={false}

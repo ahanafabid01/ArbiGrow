@@ -54,8 +54,9 @@ export default function Footer() {
 
                 {/* Telegram */}
                 <a
-                  href="https://t.me/ArbigrowOfficial"
+                  href="https://t.me/Arbigrow"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-cyan-600 hover:border-cyan-600 transition-all duration-300"
                 >
                   <Send className="w-5 h-5" />
@@ -63,8 +64,9 @@ export default function Footer() {
 
                 {/* YouTube */}
                 <a
-                  href="https://youtube.com/@arbigrow-official?si=ucCCPJtcdebgkUfZ"
+                  href="https://youtube.com/@arbigrowofficial?si=CvtM71uY1yf0I_NA"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 transition-all duration-300"
                 >
                   <Youtube className="w-5 h-5" />
