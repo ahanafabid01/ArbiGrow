@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import {
   ShieldCheck,
@@ -24,6 +24,8 @@ export default function VerificationPage() {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [frontImage, setFrontImage] = useState(null);
   const [backImage, setBackImage] = useState(null);
+  const [frontPreviewUrl, setFrontPreviewUrl] = useState("");
+  const [backPreviewUrl, setBackPreviewUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +33,30 @@ export default function VerificationPage() {
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!frontImage) {
+      setFrontPreviewUrl("");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(frontImage);
+    setFrontPreviewUrl(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [frontImage]);
+
+  useEffect(() => {
+    if (!backImage) {
+      setBackPreviewUrl("");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(backImage);
+    setBackPreviewUrl(previewUrl);
+
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [backImage]);
 
   const validateImageFile = (file) => {
     const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
@@ -436,7 +462,15 @@ export default function VerificationPage() {
                       {frontImage ? (
                         <div className="relative w-full h-full p-3">
                           <div className="w-full h-full rounded-lg bg-white/5 flex items-center justify-center relative overflow-hidden">
-                            <ImageIcon className="w-12 h-12 text-green-400" />
+                            {frontPreviewUrl ? (
+                              <img
+                                src={frontPreviewUrl}
+                                alt="Front document preview"
+                                className="h-full w-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <ImageIcon className="w-12 h-12 text-green-400" />
+                            )}
                             <button
                               type="button"
                               onClick={(e) => {
@@ -489,7 +523,15 @@ export default function VerificationPage() {
                       {frontImage ? (
                         <div className="relative w-full h-full p-3">
                           <div className="w-full h-full rounded-lg bg-white/5 flex items-center justify-center relative overflow-hidden">
-                            <ImageIcon className="w-12 h-12 text-green-400" />
+                            {frontPreviewUrl ? (
+                              <img
+                                src={frontPreviewUrl}
+                                alt="Front document preview"
+                                className="h-full w-full object-cover rounded-lg"
+                              />
+                            ) : (
+                              <ImageIcon className="w-12 h-12 text-green-400" />
+                            )}
 
                             {/* Remove Button */}
                             <button
@@ -549,7 +591,15 @@ export default function VerificationPage() {
                           {backImage ? (
                             <div className="relative w-full h-full p-3">
                               <div className="w-full h-full rounded-lg bg-white/5 flex items-center justify-center relative overflow-hidden">
-                                <ImageIcon className="w-12 h-12 text-green-400" />
+                                {backPreviewUrl ? (
+                                  <img
+                                    src={backPreviewUrl}
+                                    alt="Back document preview"
+                                    className="h-full w-full object-cover rounded-lg"
+                                  />
+                                ) : (
+                                  <ImageIcon className="w-12 h-12 text-green-400" />
+                                )}
 
                                 {/* Remove Button */}
                                 <button

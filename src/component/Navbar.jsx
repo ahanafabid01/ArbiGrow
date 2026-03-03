@@ -48,11 +48,31 @@ export default function Navbar() {
     { label: "FAQ", href: "#faq" },
   ];
 
-  const scrollToSection = (href) => {
+  const scrollToSection = useCallback((href) => {
     setIsMobileMenuOpen(false);
+    if (!href) return;
     const element = document.querySelector(href);
     if (element) element.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
+
+  const handleNavLinkClick = useCallback(
+    (link) => {
+      setIsMobileMenuOpen(false);
+
+      if (link.action) {
+        link.action();
+        return;
+      }
+
+      if (!link.href) return;
+
+      navigate("/");
+      setTimeout(() => {
+        scrollToSection(link.href);
+      }, 100);
+    },
+    [navigate, scrollToSection],
+  );
 
   return (
     <>
@@ -112,16 +132,7 @@ export default function Navbar() {
                     href={link.href || "#"}
                     onClick={(e) => {
                       e.preventDefault();
-                      setIsMobileMenuOpen(false);
-
-                      if (link.action) {
-                        link.action();
-                      } else if (link.href) {
-                        navigate("/");
-                        setTimeout(() => {
-                          scrollToSection(link.href);
-                        }, 100);
-                      }
+                      handleNavLinkClick(link);
                     }}
                     className="relative px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 group"
                   >
@@ -268,16 +279,10 @@ export default function Navbar() {
                   {navLinks.map((link, idx) => (
                     <motion.a
                       key={idx}
-                      href={link.href}
+                      href={link.href || "#"}
                       onClick={(e) => {
                         e.preventDefault();
-                        scrollToSection(link.href);
-
-                        if (link.action) {
-                          link.action();
-                        } else if (link.href) {
-                          scrollToSection(link.href);
-                        }
+                        handleNavLinkClick(link);
                       }}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}

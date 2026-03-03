@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
 import {
   Wallet,
+  Coins,
   Download,
   Upload,
   Users,
@@ -11,7 +12,6 @@ import {
   ChevronRight,
   Pickaxe,
   Lock,
-  Info,
   X,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
@@ -153,6 +153,14 @@ const OverviewPage = ({
             currency: "USDT",
           },
           {
+            label: "ARBX Wallet",
+            balance: 20000,
+            description: "Check Token",
+            icon: Coins,
+            currency: "ARBX",
+            hasInfo: true,
+          },
+          {
             label: "Deposit Wallet",
             balance: Number(user?.deposit_wallet ?? 0),
             description: "Total Deposited",
@@ -180,14 +188,6 @@ const OverviewPage = ({
             icon: TrendingUp,
             currency: "USDT",
           },
-          {
-            label: "ARBX Wallet",
-            balance: 20000,
-            description: "Arbitrum One",
-            icon: Wallet,
-            currency: "ARBX",
-            hasInfo: true,
-          },
         ].map((wallet, idx) => (
           <motion.div
             key={idx}
@@ -201,16 +201,6 @@ const OverviewPage = ({
                 <wallet.icon className="w-5 h-5 text-cyan-400" />
               </div>
               <div className="flex items-center gap-2">
-                {wallet.hasInfo && (
-                  <button
-                    type="button"
-                    onClick={() => setIsTokenInfoOpen(true)}
-                    className="w-7 h-7 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:text-white hover:border-cyan-400 transition-colors flex items-center justify-center"
-                    aria-label="Open token information"
-                  >
-                    <Info className="w-4 h-4" />
-                  </button>
-                )}
                 <div className="text-xs px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                   {wallet.currency}
                 </div>
@@ -220,7 +210,20 @@ const OverviewPage = ({
             <div className="text-2xl font-bold text-white mb-1">
               ${wallet.balance.toFixed(7)}
             </div>
-            <div className="text-xs text-gray-500">{wallet.description}</div>
+            <div className="text-xs text-gray-500">
+              {wallet.hasInfo ? (
+                <button
+                  type="button"
+                  onClick={() => setIsTokenInfoOpen(true)}
+                  className="text-cyan-300 hover:text-cyan-200 transition-colors"
+                  aria-label="Open token information"
+                >
+                  {wallet.description}
+                </button>
+              ) : (
+                wallet.description
+              )}
+            </div>
           </motion.div>
         ))}
       </div>

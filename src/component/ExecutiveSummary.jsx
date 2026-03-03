@@ -33,16 +33,23 @@ export default function ExecutiveSummary() {
               transparent operations, and rigorous security standards, ArbiGrow provides sustainable automation for the next generation of digital asset management.
             </p>
 
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {[
                 { label: 'AI-Powered', value: 'Arbi-Core' },
                 { label: 'Network', value: 'Arbitrum L2' },
                 { label: 'Security', value: 'Non-Custodial' },
                 { label: 'Architecture', value: 'Decentralized' }
               ].map((item, idx) => (
-                <div key={idx} className="text-center p-4 rounded-xl bg-white/5 border border-white/10">
-                  <div className="text-sm text-gray-400 mb-1">{item.label}</div>
-                  <div className="font-semibold text-[14px] text-white">{item.value}</div>
+                <div
+                  key={idx}
+                  className="text-center px-3 py-4 sm:p-4 rounded-xl bg-white/5 border border-white/10 min-h-[104px] flex flex-col justify-center"
+                >
+                  <div className="text-xs sm:text-sm text-gray-400 mb-1">
+                    {item.label}
+                  </div>
+                  <div className="font-semibold text-[12px] sm:text-[13px] md:text-[14px] text-white leading-tight break-normal">
+                    {item.value}
+                  </div>
                 </div>
               ))}
             </div>

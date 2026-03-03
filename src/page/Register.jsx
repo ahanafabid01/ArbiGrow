@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Navbar from "../component/Navbar";
 import Button from "../component/Button";
 import { registerUser } from "../api/auth.api.js";
 import useUserStore from "../store/userStore.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Circle, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
@@ -29,6 +29,50 @@ export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [searchParams] = useSearchParams();
+
+  const passwordRequirements = useMemo(
+    () => [
+      {
+        key: "length",
+        label: "At least 8 characters",
+        valid: formData.password.length >= 8,
+      },
+      {
+        key: "uppercase",
+        label: "At least one uppercase letter",
+        valid: /[A-Z]/.test(formData.password),
+      },
+      {
+        key: "lowercase",
+        label: "At least one lowercase letter",
+        valid: /[a-z]/.test(formData.password),
+      },
+      {
+        key: "number",
+        label: "At least one number",
+        valid: /[0-9]/.test(formData.password),
+      },
+      {
+        key: "special",
+        label: "At least one special character",
+        valid: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+      },
+    ],
+    [formData.password],
+  );
+
+  const passwordMessages = [
+    "Password must be at least 8 characters",
+    "Password must include an uppercase letter",
+    "Password must include a lowercase letter",
+    "Password must include a number",
+    "Password must include a special character",
+  ];
+  const allPasswordRequirementsMet = passwordRequirements.every(
+    (item) => item.valid,
+  );
+  const showPasswordGuide =
+    formData.password.length > 0 && !allPasswordRequirementsMet;
 
   // referral code from URL
   useEffect(() => {
@@ -224,6 +268,7 @@ export default function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
+                value={formData.password}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
@@ -246,6 +291,7 @@ export default function RegisterForm() {
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirm_password"
                 placeholder="Confirm your password"
+                value={formData.confirm_password}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4171AD]"
                 onChange={handleChange}
               />
@@ -257,6 +303,31 @@ export default function RegisterForm() {
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+
+            {showPasswordGuide && (
+              <div className="rounded-lg border border-[#35598f] bg-[#101b3d] px-3 py-3">
+                <p className="text-xs font-semibold tracking-wide text-white">
+                  Password requirements
+                </p>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {passwordRequirements.map((item) => (
+                    <p
+                      key={item.key}
+                      className={`flex items-center gap-2 text-xs ${
+                        item.valid ? "text-emerald-300" : "text-gray-300"
+                      }`}
+                    >
+                      {item.valid ? (
+                        <CheckCircle2 size={14} className="shrink-0" />
+                      ) : (
+                        <Circle size={14} className="shrink-0" />
+                      )}
+                      {item.label}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Checkbox */}
             <div className="flex items-start gap-2 text-sm text-gray-600">
@@ -282,7 +353,7 @@ export default function RegisterForm() {
             </div>
 
             {/* dynamic message color */}
-            {message && (
+            {message && !passwordMessages.includes(message) && (
               <p
                 className={`text-center text-sm ${
                   isSuccess ? "text-blue-500" : "text-red-500"
