@@ -252,14 +252,14 @@ const OverviewPage = ({
                     <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                       Token Information
                     </h3>
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => setIsTokenInfoOpen(false)}
                       className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-white/20 text-gray-300 hover:text-white hover:border-cyan-400/60 transition-colors flex items-center justify-center shrink-0"
                       aria-label="Close token information popup"
                     >
                       <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 border-b border-white/10 pb-4 sm:pb-5">

@@ -58,24 +58,28 @@ export default function LoginForm() {
       setIsSuccess(false);
 
       const res = await loginUser(formData);
-       console.log(res, "login api response");
-       console.log("toiken", res?.data);
+      console.log(res, "login api response");
+      //  console.log("toiken", res?.data);
 
       setUser(res?.data?.user);
       setToken(res?.data?.access_token);
       if (res?.data?.doc_submitted === false) {
         navigate("/verification-page");
+      } else if (!res?.data?.user?.email_verified) {
+        navigate("/email-verification");
       } else if (res?.data?.user?.is_admin) {
         navigate("/admin-dashboard");
       } else if (
         res?.data?.kyc_status === "pending" &&
         res?.data?.doc_submitted === true &&
-        res?.data?.kyc_status != "rejected"
+        res?.data?.kyc_status != "rejected" &&
+        res?.data?.user?.email_verified
       ) {
         navigate("/verification-pending");
       } else if (
         res?.data?.kyc_status === "approved" &&
-        res?.data?.doc_submitted === true
+        res?.data?.doc_submitted === true &&
+        res?.data?.email_verified === true
       ) {
         navigate("/dashboard");
       } else {
