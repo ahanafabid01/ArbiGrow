@@ -9,3 +9,12 @@ export const refreshUserStore = () => {
     },
   });
 };
+
+export const getReferralNetwork = () => {
+  const token = useUserStore.getState().token;
+  return api.get("v1/user/referral-network", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};

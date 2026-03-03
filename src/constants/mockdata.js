@@ -65,7 +65,7 @@ export const fixedReferralData = [
   },
   {
     level: 2,
-    commissionRate: "5%",
+    commissionRate: "8%",
     totalEarnings: 95.2,
     users: [
       {
@@ -113,7 +113,7 @@ export const fixedReferralData = [
   },
   {
     level: 3,
-    commissionRate: "3%",
+    commissionRate: "7%",
     totalEarnings: 54.8,
     users: [
       {
@@ -164,7 +164,7 @@ export const fixedReferralData = [
   },
   {
     level: 4,
-    commissionRate: "2%",
+    commissionRate: "6%",
     totalEarnings: 28.4,
     users: [
       {
@@ -226,7 +226,7 @@ export const fixedReferralData = [
   },
   {
     level: 5,
-    commissionRate: "1%",
+    commissionRate: "5%",
     totalEarnings: 11.3,
     users: [
       {

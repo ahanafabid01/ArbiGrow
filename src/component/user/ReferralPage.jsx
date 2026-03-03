@@ -1,5 +1,6 @@
 // src/pages/ReferralPage.jsx
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
@@ -12,13 +13,13 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
 
 const ReferralPage = ({
   totalReferrals,
-  totalActiveReferrals,
-  mockUserData,
   fixedReferralData,
   levelColors,
   selectedReferralLevel,
@@ -29,6 +30,163 @@ const ReferralPage = ({
   lc,
 }) => {
   const { user } = useUserStore();
+  const [isTreeOpen, setIsTreeOpen] = useState(false);
+  const [collapsedNodes, setCollapsedNodes] = useState({});
+  const rootUsername = user?.username || "";
+  const rootName = user?.full_name || "You";
+  const totalEarned =
+    Number(user?.referral_wallet || 0) + Number(user?.generation_wallet || 0);
+
+  const membersByLevel = fixedReferralData.flatMap((levelGroup) =>
+    levelGroup.users.map((member) => ({
+      ...member,
+      level: levelGroup.level,
+    })),
+  );
+
+  const childrenByReferrer = membersByLevel.reduce((acc, member) => {
+    if (!acc[member.referredBy]) {
+      acc[member.referredBy] = [];
+    }
+    acc[member.referredBy].push(member);
+    return acc;
+  }, {});
+
+  const buildReferralTree = (member, maxDepth = 5) => {
+    if (member.level >= maxDepth) {
+      return { ...member, children: [] };
+    }
+    const children = (childrenByReferrer[member.username] || []).map((child) =>
+      buildReferralTree(child, maxDepth),
+    );
+    return { ...member, children };
+  };
+
+  const rootChildren = (childrenByReferrer[rootUsername] || []).map((child) =>
+    buildReferralTree(child),
+  );
+
+  const treeRoot = {
+    id: "root-user",
+    name: rootName,
+    username: rootUsername,
+    level: 0,
+    joinDate: "Root",
+    totalEarnings: totalEarned,
+    directReferrals: rootChildren.length,
+    referredBy: null,
+    children: rootChildren,
+  };
+
+  const renderTreeNode = (node, depth = 0) => {
+    const isRoot = depth === 0;
+    const hasChildren = (node.children?.length || 0) > 0;
+    const isCollapsed =
+      collapsedNodes[node.id] ?? (hasChildren && depth > 0);
+    const nodeTheme =
+      node.level === 0
+        ? {
+            bg: "from-cyan-600/15 to-blue-600/10",
+            border: "border-cyan-500/30",
+            text: "text-cyan-300",
+          }
+        : levelColors[node.level] || levelColors[1];
+
+    const toggleNode = () => {
+      if (!hasChildren) return;
+      setCollapsedNodes((prev) => ({
+        ...prev,
+        [node.id]: !(prev[node.id] ?? (hasChildren && depth > 0)),
+      }));
+    };
+
+    return (
+      <div
+        key={`${node.id}-${depth}`}
+        className={`relative ${isRoot ? "" : "ml-4 sm:ml-6 pl-4 sm:pl-6 border-l border-white/10"}`}
+      >
+        {!isRoot && (
+          <span className="absolute left-0 top-6 w-4 sm:w-6 border-t border-white/10" />
+        )}
+
+        <div
+          className={`rounded-xl border ${nodeTheme.border} bg-gradient-to-br ${nodeTheme.bg} p-2.5 sm:p-3`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-white text-[13px] sm:text-sm font-semibold truncate">
+                {node.name}
+              </p>
+              <p className="text-[11px] text-gray-400 truncate">
+                @{node.username}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {isRoot ? (
+                <Star className="w-4 h-4 text-cyan-300 flex-shrink-0" />
+              ) : (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full border ${nodeTheme.border} ${nodeTheme.text} bg-black/20`}
+                >
+                  L{node.level}
+                </span>
+              )}
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={toggleNode}
+                  className="w-6 h-6 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center"
+                  title={isCollapsed ? "Expand branch" : "Collapse branch"}
+                >
+                  {isCollapsed ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-white" />
+                  ) : (
+                    <ChevronUp className="w-3.5 h-3.5 text-white" />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!isCollapsed && (
+            <>
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px]">
+                <div className="rounded-md bg-white/[0.04] px-2 py-1">
+                  <p className="text-gray-500 uppercase">Direct</p>
+                  <p className="text-white font-semibold">{node.directReferrals}</p>
+                </div>
+                <div className="rounded-md bg-white/[0.04] px-2 py-1">
+                  <p className="text-gray-500 uppercase">Earned</p>
+                  <p className="text-green-400 font-semibold">
+                    ${Number(node.totalEarnings || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="rounded-md bg-white/[0.04] px-2 py-1 col-span-2 sm:col-span-1">
+                  <p className="text-gray-500 uppercase">Joined</p>
+                  <p className="text-white font-semibold truncate">
+                    {node.joinDate}
+                  </p>
+                </div>
+              </div>
+
+              {!isRoot && (
+                <p className="text-[10px] text-gray-400 mt-1.5 truncate">
+                  Referred by @{node.referredBy}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {hasChildren && !isCollapsed && (
+          <div className="mt-3 space-y-3">
+            {node.children.map((child) => renderTreeNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       {/* Page Header */}
@@ -57,7 +215,7 @@ const ReferralPage = ({
           {
             icon: DollarSign,
             label: "Earned",
-            value: `$${mockUserData.wallets.referral.toFixed(0)}`,
+            value: `$${totalEarned.toFixed(2)}`,
             color: "text-purple-400",
             border: "border-purple-500/30",
             bg: "from-purple-600/10 to-pink-600/10",
@@ -100,7 +258,7 @@ const ReferralPage = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs break-all">
             {import.meta.env.VITE_FRONTNED_URL}/register?ref_code=
-            {user.referral_code}
+            {user?.referral_code || ""}
           </div>
           <button
             onClick={handleCopyLink}
@@ -205,6 +363,44 @@ const ReferralPage = ({
               ${activeLevel.totalEarnings.toFixed(2)} earned
             </span>
           </div>
+        </div>
+
+        {/* Tree-wise hierarchy view */}
+        <div className="mx-4 md:mx-5 mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-2">
+              <GitBranch className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-semibold text-white">
+                Tree View (Who referred who)
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTreeOpen((prev) => !prev)}
+              className="px-2.5 py-1 rounded-md text-xs border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 flex items-center gap-1"
+            >
+              {isTreeOpen ? "Collapse" : "Expand"}
+              {isTreeOpen ? (
+                <ChevronUp className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+
+          {!isTreeOpen ? (
+            <p className="text-xs text-gray-500">
+              Tree is collapsed. Expand to view hierarchy.
+            </p>
+          ) : treeRoot.children.length === 0 ? (
+            <p className="text-xs text-gray-400">
+              No referral hierarchy found yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[280px]">{renderTreeNode(treeRoot)}</div>
+            </div>
+          )}
         </div>
 
         {/* User cards grid */}

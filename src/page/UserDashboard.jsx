@@ -34,7 +34,6 @@ import Logo from "../assets/Arbigrow-Logo.png";
 import {
   mockMarketPrices,
   mockUserData,
-  fixedReferralData,
   generateMockTransactions,
 } from "../constants/mockdata.js";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +43,16 @@ import OverviewPage from "../component/user/OverviewPage.jsx";
 import useUserStore from "../store/userStore.js";
 import { LogOut } from "lucide-react";
 import TransactionHistoryPage from "../component/user/TransactionHistoryPage.jsx";
+import { getReferralNetwork } from "../api/user.api.js";
 // Mock data for market prices
+
+const EMPTY_REFERRAL_LEVELS = [
+  { level: 1, commissionRate: "10%", totalEarnings: 0, users: [] },
+  { level: 2, commissionRate: "8%", totalEarnings: 0, users: [] },
+  { level: 3, commissionRate: "7%", totalEarnings: 0, users: [] },
+  { level: 4, commissionRate: "6%", totalEarnings: 0, users: [] },
+  { level: 5, commissionRate: "5%", totalEarnings: 0, users: [] },
+];
 
 export function UserDashboard() {
   const [activePage, setActivePage] = useState("overview");
@@ -56,6 +64,11 @@ export function UserDashboard() {
   const [transactions] = useState(generateMockTransactions());
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
+  const [referralLevels, setReferralLevels] = useState(EMPTY_REFERRAL_LEVELS);
+  const [referralTotals, setReferralTotals] = useState({
+    totalReferrals: 0,
+    totalActiveReferrals: 0,
+  });
   //  const [user, setuUsers] = useState();
   const navigate = useNavigate();
   const transactionsPerPage = 50;
@@ -65,6 +78,58 @@ export function UserDashboard() {
   useEffect(() => {
     // console.log("userrr", user);
   }, [user]);
+
+  useEffect(() => {
+    const loadReferralNetwork = async () => {
+      try {
+        const res = await getReferralNetwork();
+        const payload = res?.data || {};
+        const levelsFromApi = Array.isArray(payload.levels) ? payload.levels : [];
+
+        const mappedByLevel = levelsFromApi.reduce((acc, levelRow) => {
+          const levelNo = Number(levelRow.level);
+          acc[levelNo] = {
+            level: levelNo,
+            commissionRate: levelRow.commission_rate || `${levelNo}%`,
+            totalEarnings: Number(levelRow.total_earnings || 0),
+            users: Array.isArray(levelRow.users)
+              ? levelRow.users.map((member) => ({
+                  id: `l${levelNo}-${member.id}`,
+                  name: member.name,
+                  username: member.username,
+                  level: Number(member.level || levelNo),
+                  joinDate: member.join_date || "-",
+                  totalEarnings: Number(member.total_earnings || 0),
+                  referredBy: member.referred_by || "",
+                  directReferrals: Number(member.direct_referrals || 0),
+                }))
+              : [],
+          };
+          return acc;
+        }, {});
+
+        const normalizedLevels = [1, 2, 3, 4, 5].map(
+          (levelNo) => mappedByLevel[levelNo] || EMPTY_REFERRAL_LEVELS[levelNo - 1],
+        );
+
+        setReferralLevels(normalizedLevels);
+        setReferralTotals({
+          totalReferrals: Number(payload.total_referrals || 0),
+          totalActiveReferrals: Number(payload.total_active_referrals || 0),
+        });
+      } catch (error) {
+        setReferralLevels(EMPTY_REFERRAL_LEVELS);
+        setReferralTotals({
+          totalReferrals: 0,
+          totalActiveReferrals: 0,
+        });
+      }
+    };
+
+    if (activePage === "referral") {
+      loadReferralNetwork();
+    }
+  }, [activePage]);
 
   const handleLogout = () => {
     logout();
@@ -164,14 +229,11 @@ export function UserDashboard() {
   };
 
   // ── Referral helpers ──────────────────────────────────────────
-  const totalReferrals = fixedReferralData.reduce(
+  const totalReferrals = referralTotals.totalReferrals || referralLevels.reduce(
     (s, l) => s + l.users.length,
     0,
   );
-  const totalActiveReferrals = fixedReferralData.reduce(
-    (s, l) => s + l.users.filter((u) => u.status === "active").length,
-    0,
-  );
+  const totalActiveReferrals = referralTotals.totalActiveReferrals;
 
   const levelColors = {
     1: {
@@ -209,17 +271,15 @@ export function UserDashboard() {
   const renderPageContent = () => {
     // Referral Page
     if (activePage === "referral") {
-      const activeLevel = fixedReferralData.find(
+      const activeLevel = referralLevels.find(
         (l) => l.level === selectedReferralLevel,
-      );
+      ) || EMPTY_REFERRAL_LEVELS[0];
       const lc = levelColors[selectedReferralLevel];
 
       return (
         <ReferralPage
           totalReferrals={totalReferrals}
-          totalActiveReferrals={totalActiveReferrals}
-          mockUserData={mockUserData}
-          fixedReferralData={fixedReferralData}
+          fixedReferralData={referralLevels}
           levelColors={levelColors}
           selectedReferralLevel={selectedReferralLevel}
           setSelectedReferralLevel={setSelectedReferralLevel}
