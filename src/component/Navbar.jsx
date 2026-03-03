@@ -22,8 +22,10 @@ import Button from "./Button";
 import { useNavigate } from "react-router-dom";
 import useUserStore from "../store/userStore";
 import logo from "../assets/Arbigrow-Logo.png";
+import { useLocation } from "react-router-dom";
 
 export default function Navbar() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -41,11 +43,14 @@ export default function Navbar() {
     navigate("/login");
   }, [logout, navigate]);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+ useEffect(() => {
+  if (location.state?.scrollTo) {
+    const el = document.querySelector(location.state.scrollTo);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+}, [location]);
 
   const navLinks = [
     { label: "Home", href: "#home" },
@@ -63,24 +68,23 @@ export default function Navbar() {
     if (element) element.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const handleNavLinkClick = useCallback(
-    (link) => {
-      setIsMobileMenuOpen(false);
+  const handleNavLinkClick = (link) => {
+  setIsMobileMenuOpen(false);
 
-      if (link.action) {
-        link.action();
-        return;
-      }
+  if (link.action) {
+    link.action();
+    return;
+  }
 
-      if (!link.href) return;
+  if (!link.href) return;
 
-      navigate("/");
-      setTimeout(() => {
-        scrollToSection(link.href);
-      }, 100);
-    },
-    [navigate, scrollToSection],
-  );
+  if (window.location.pathname !== "/") {
+    navigate("/", { state: { scrollTo: link.href } });
+  } else {
+    const el = document.querySelector(link.href);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  }
+};
 
   return (
     <>
