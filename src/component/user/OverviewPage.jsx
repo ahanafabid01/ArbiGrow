@@ -154,8 +154,8 @@ const OverviewPage = ({
           },
           {
             label: "ARBX Wallet",
-            balance: 20000,
-            description: "Check Token",
+            balance: Number(user?.arbx_wallet ?? 0),
+            description: "Token Information",
             icon: Coins,
             currency: "ARBX",
             hasInfo: true,
@@ -264,8 +264,12 @@ const OverviewPage = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 border-b border-white/10 pb-4 sm:pb-5">
                     <div>
-                      <div className="text-xs text-gray-400 mb-1">Token Name</div>
-                      <div className="text-white font-semibold">Arbitrax AI</div>
+                      <div className="text-xs text-gray-400 mb-1">
+                        Token Name
+                      </div>
+                      <div className="text-white font-semibold">
+                        Arbitrax AI
+                      </div>
                     </div>
                     <div>
                       <div className="text-xs text-gray-400 mb-1">
@@ -280,7 +284,9 @@ const OverviewPage = ({
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-400 mb-1">Total Supply</div>
+                      <div className="text-xs text-gray-400 mb-1">
+                        Total Supply
+                      </div>
                       <div className="text-white font-semibold">
                         1,000,000,000 ARBX
                       </div>
@@ -331,9 +337,9 @@ const OverviewPage = ({
           </span>
         </h3>
         <p className="text-gray-300 mb-3">
-          These {Number(user.arbx_wallet).toFixed(7)} ARBX tokens you earned
-          are not just a number, they are a part of tomorrow&apos;s global
-          arbitrage ecosystem.
+          These {Number(user.arbx_wallet).toFixed(7)} ARBX tokens you earned are
+          not just a number, they are a part of tomorrow&apos;s global arbitrage
+          ecosystem.
         </p>
         <p className="text-gray-300">
           According to our launching roadmap, these tokens will be tradable very

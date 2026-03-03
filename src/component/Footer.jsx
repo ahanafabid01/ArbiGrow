@@ -64,7 +64,7 @@ export default function Footer() {
 
                 {/* YouTube */}
                 <a
-                  href="https://youtube.com/@arbigrowofficial?si=CvtM71uY1yf0I_NA"
+                  href="https://www.youtube.com/@arbigrowofficial"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 transition-all duration-300"
