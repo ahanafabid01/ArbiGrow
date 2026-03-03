@@ -25,22 +25,10 @@ export const resetPassword = (newPassword, token) => {
   );
 };
 
-export const verifyEmail = (token) => {
-  return api.post("v1/auth/verify-email", null, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const verifyEmail = (data) => {
+  return api.post("v1/auth/verify-email", data);
 };
 
-export const resendVerificationEmail = (token, email) => {
-  return api.post(
-    "v1/auth/resend-verification",
-    { email },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
+export const resendVerificationEmail = (email) => {
+  return api.post("v1/auth/resend-verification", { email });
 };

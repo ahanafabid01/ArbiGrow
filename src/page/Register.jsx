@@ -2,14 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import Navbar from "../component/Navbar";
 import Button from "../component/Button";
 import { registerUser } from "../api/auth.api.js";
-import useUserStore from "../store/userStore.js";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Circle, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
   const navigate = useNavigate();
-  const setUser = useUserStore((state) => state.setUser);
-  const setToken = useUserStore((state) => state.setToken);
   const [isReferralLocked, setIsReferralLocked] = useState(false);
 
   const [agree, setAgree] = useState(false);
@@ -147,17 +144,16 @@ export default function RegisterForm() {
       setIsSuccess(false);
 
       const payload = { ...formData };
-      const res = await registerUser(payload);
+      await registerUser(payload);
 
-      setUser(res.data.user);
-      setToken(res.data.token);
-
-      setMessage(res.data.message || "Registration successful");
+      setMessage("Registration successful. Check your email for OTP.");
       setIsSuccess(true);
 
       setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+        navigate(
+          `/email-verification?email=${encodeURIComponent(formData.email)}`,
+        );
+      }, 600);
     } catch (error) {
       const res = error.response;
       // console.log("❌ FULL ERROR OBJECT:", error);
