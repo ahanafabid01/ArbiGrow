@@ -3,11 +3,10 @@ import { Search } from 'lucide-react';
 export function InvestmentFilters({
   searchQuery,
   statusFilter,
-  packageFilter,
-  uniquePackages,
+
   onSearchChange,
   onStatusChange,
-  onPackageChange,
+  
 }) {
   return (
     <div className="mb-6 flex flex-col lg:flex-row gap-4">
@@ -44,7 +43,7 @@ export function InvestmentFilters({
       </div>
 
       {/* Package Filter */}
-      <select
+      {/* <select
         value={packageFilter}
         onChange={(e) => onPackageChange(e.target.value)}
         className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-cyan-500/50 focus:outline-none transition-colors"
@@ -55,7 +54,7 @@ export function InvestmentFilters({
             {pkg}
           </option>
         ))}
-      </select>
+      </select> */}
 
     </div>
   );

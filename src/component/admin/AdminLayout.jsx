@@ -53,26 +53,26 @@ export default function AdminLayout({
     icon: Network,
     description: "Manage networks",
   },
-  {
-    id: "reports",
-    label: "Reports",
-    icon: TrendingUp,
-    description: "Coming Soon",
-    disabled: true,
-  },
+  // {
+  //   id: "reports",
+  //   label: "Reports",
+  //   icon: TrendingUp,
+  //   description: "Coming Soon",
+  //   disabled: true,
+  // },
    {
   id: "investments",
   label: "Investments",
   icon: Package,
   description: "Manage Investments",
 },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: Settings,
-    description: "Coming Soon",
-    disabled: true,
-  },
+  // {
+  //   id: "settings",
+  //   label: "Settings",
+  //   icon: Settings,
+  //   description: "Coming Soon",
+  //   disabled: true,
+  // },
 ];
   const logout = useUserStore((state) => state.logout);
 

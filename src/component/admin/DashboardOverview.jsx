@@ -17,7 +17,7 @@ export default function DashboardOverview() {
         {[
           { label: "Total Users", value: "1,234", change: "+12%" },
           { label: "Active Users", value: "856", change: "+8%" },
-          { label: "Pending Verifications", value: "42", change: "-5%" },
+          { label: "Pending Verifications", value: "42", change: "-5%"},
           { label: "Total Revenue", value: "$125K", change: "+18%" },
         ].map((stat, idx) => (
           <motion.div

@@ -44,7 +44,7 @@ const ReferralPage = ({
       </div>
 
       {/* Referral Stats — 2 compact cards */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* <div className="grid grid-cols-2 gap-4">
         {[
           {
             icon: Users,
@@ -79,7 +79,7 @@ const ReferralPage = ({
             </div>
           </motion.div>
         ))}
-      </div>
+      </div> */}
 
       {/* Referral Link Box */}
       <motion.div
@@ -201,9 +201,9 @@ const ReferralPage = ({
                 {activeLevel.commissionRate} commission
               </span>
             </div>
-            <span className="text-green-400 font-semibold">
+            {/* <span className="text-green-400 font-semibold">
               ${activeLevel.totalEarnings.toFixed(2)} earned
-            </span>
+            </span> */}
           </div>
         </div>
 
@@ -246,27 +246,27 @@ const ReferralPage = ({
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-1.5 mb-3">
+                  <div className="grid grid-cols-1 gap-1.5 mb-3">
                     {[
                       {
                         label: "Joined",
                         value: user.joinDate,
                         cls: "text-white",
                       },
-                      {
-                        label: "Earnings",
-                        value: `$${user.totalEarnings.toFixed(2)}`,
-                        cls: "text-green-400",
-                      },
-                      {
-                        label: "Sub-refs",
-                        value: String(user.directReferrals),
-                        cls: lc.text,
-                      },
+                      // {
+                      //   label: "Earnings",
+                      //   value: `$${user.totalEarnings.toFixed(2)}`,
+                      //   cls: "text-green-400",
+                      // },
+                      // {
+                      //   label: "Sub-refs",
+                      //   value: String(user.directReferrals),
+                      //   cls: lc.text,
+                      // },
                     ].map((s) => (
                       <div
                         key={s.label}
-                        className="bg-white/[0.04] rounded-lg px-2 py-1.5 text-center"
+                        className="bg-white/[0.04] rounded-lg px-2 py-3 flex flex-col items-center justify-center text-center"
                       >
                         <div className="text-[9px] text-gray-500 mb-0.5 uppercase tracking-wide">
                           {s.label}
