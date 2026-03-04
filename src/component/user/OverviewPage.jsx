@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
 import { useEffect, useState } from "react";
-import { getMyDeposits, refreshUserStore } from "../../api/user.api.js";
+import {
+  getMyDeposits,
+  refreshUserStore,
+  startMining,
+  claimMining,
+} from "../../api/user.api.js";
 
 const OverviewPage = ({
   mockUserData,
@@ -27,6 +32,8 @@ const OverviewPage = ({
   const { user, setUser } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
   const [totalApprovedDeposits, setTotalApprovedDeposits] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(null);
+  const isMiningActive = user?.is_mining && user?.mining_started_at;
 
   // console.log("global user store from OverviewPage", user);
   useEffect(() => {
@@ -45,12 +52,13 @@ const OverviewPage = ({
           };
 
           setUser(updatedUser);
-          // console.log("global user store after OverviewPage", user);
+          console.log("global user store after OverviewPage", user);
         }
 
         const deposits = depositsResponse?.data?.data || [];
         const approvedTotal = deposits.reduce((sum, deposit) => {
-          const isApproved = String(deposit?.status || "").toLowerCase() === "approved";
+          const isApproved =
+            String(deposit?.status || "").toLowerCase() === "approved";
           const amount = Number(deposit?.amount || 0);
           return isApproved ? sum + (Number.isNaN(amount) ? 0 : amount) : sum;
         }, 0);
@@ -63,6 +71,69 @@ const OverviewPage = ({
 
     loadUser();
   }, [setUser]);
+
+  useEffect(() => {
+    if (!user?.is_mining || !user?.mining_started_at) return;
+
+    const start = new Date(user.mining_started_at).getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diff = end - now;
+
+      if (diff <= 0) {
+        setRemainingTime(0);
+        return;
+      }
+
+      setRemainingTime(diff);
+    };
+
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [user?.is_mining, user?.mining_started_at]);
+
+  const formatTime = (ms) => {
+    if (!ms) return "00:00:00";
+
+    const totalSeconds = Math.floor(ms / 1000);
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handleStartMining = async () => {
+    try {
+      await startMining();
+
+      // console.log("START MINING RESPONSE:", res.data);
+
+      await refreshUserStore(); // refresh store
+    } catch (err) {
+      console.error(err?.response?.data || err);
+    }
+  };
+
+  const handleClaimMining = async () => {
+    try {
+      await claimMining();
+
+      // console.log("CLAIM RESPONSE:", res.data);
+
+      await refreshUserStore();
+    } catch (err) {
+      console.error(err?.response?.data || err);
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -390,11 +461,27 @@ const OverviewPage = ({
             </div>
           </div>
           <button
-            disabled
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-600/50 to-orange-600/50 text-white font-semibold flex items-center gap-2 opacity-50 cursor-not-allowed"
+            onClick={
+              !isMiningActive
+                ? handleStartMining
+                : remainingTime === 0
+                  ? handleClaimMining
+                  : null
+            }
+            disabled={isMiningActive && remainingTime > 0}
+            className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 ${
+              isMiningActive && remainingTime > 0
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-gradient-to-r from-yellow-600 to-orange-600"
+            }`}
           >
-            <Lock className="w-5 h-5" />
-            Start Mining (Coming Soon)
+            <Pickaxe className="w-5 h-5" />
+
+            {!isMiningActive && "Start Mining"}
+
+            {isMiningActive && remainingTime > 0 && formatTime(remainingTime)}
+
+            {isMiningActive && remainingTime === 0 && "Claim Reward"}
           </button>
         </div>
       </motion.div>

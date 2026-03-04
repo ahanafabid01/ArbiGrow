@@ -31,3 +31,11 @@ export const createDepositRequest = (payload) => {
 export const getMyDeposits = () => {
   return api.get("v1/deposits/my", authHeaders());
 };
+
+export const startMining = () => {
+  return api.post("v1/user/start-mining", {}, authHeaders());
+};
+
+export const claimMining = () => {
+  return api.post("v1/user/claim-mining", {}, authHeaders());
+};
