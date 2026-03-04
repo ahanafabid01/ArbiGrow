@@ -32,7 +32,7 @@ export default function TierSection({ onSelect }) {
                     delay: tierIndex * 0.1 + pkgIndex * 0.05,
                   }}
                   // for future: modal disabled but need to
-                  // onClick={() => onSelect(pkg)}
+                  onClick={() => onSelect(pkg)}
                   className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#0d1428] to-[#0a0e27] p-6 text-left transition-all hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10"
                 >
                   {/* Circuit Pattern Background */}

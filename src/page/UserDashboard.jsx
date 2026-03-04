@@ -45,6 +45,8 @@ import { LogOut } from "lucide-react";
 import TransactionHistoryPage from "../component/user/TransactionHistoryPage.jsx";
 import { getReferralNetwork } from "../api/user.api.js";
 import DepositPage from "../component/user/DepositUSDT.jsx";
+import TierSection from "../component/package/TierSection.jsx";
+import PackageModal from "../component/package/PackageModal.jsx";
 // Mock data for market prices
 
 const EMPTY_REFERRAL_LEVELS = [
@@ -56,6 +58,7 @@ const EMPTY_REFERRAL_LEVELS = [
 ];
 
 export function UserDashboard() {
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [activePage, setActivePage] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -156,7 +159,7 @@ export function UserDashboard() {
       label: "Packages",
       icon: Package,
       description: "Investment plans",
-      comingSoon: true,
+      
     },
     {
       id: "investments",
@@ -177,7 +180,7 @@ export function UserDashboard() {
       label: "Transactions",
       icon: FileText,
       description: "Transaction history",
-      comingSoon: true,
+      comingSoon:true ,
     },
     {
       id: "referral",
@@ -313,8 +316,22 @@ export function UserDashboard() {
       );
     }
             if (activePage === "deposit") {
-   return <DepositPage />;
-   }
+          return <DepositPage />;
+         }
+
+         //packege moddal
+         if (activePage === "packages") {
+  return (
+    <>
+      <TierSection onSelect={setSelectedPackage} />
+
+      <PackageModal
+        selectedPackage={selectedPackage}
+        setSelectedPackage={setSelectedPackage}
+      />
+    </>
+  );
+}
   
     if (activePage !== "overview") {
       return (
