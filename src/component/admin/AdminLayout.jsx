@@ -13,6 +13,7 @@ import {
   LogOut,
    Wallet,      // ✅ add
   Network,
+  Package,
 } from "lucide-react";
 import logo from "../../assets/Arbigrow-Logo.png";
 import { useNavigate } from "react-router-dom";
@@ -59,6 +60,12 @@ export default function AdminLayout({
     description: "Coming Soon",
     disabled: true,
   },
+   {
+  id: "investments",
+  label: "Investments",
+  icon: Package,
+  description: "Manage Investments",
+},
   {
     id: "settings",
     label: "Settings",

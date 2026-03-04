@@ -7,11 +7,26 @@ import { getAllUsers } from "../api/admin.api.js";
 import useUserStore from "../store/userStore.js";
 import DepositRequests from "../component/admin/DepositRequests.jsx";
 import DepositNetworks from "../component/admin/DepositNetworks.jsx";
+import { InvestmentsManagement } from "../component/admin/InvestmentsManagement.jsx";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
   // ✅ State
+  const [investments, setInvestments] = useState([
+    {
+    id: 1,
+    userName: "John Anderson",
+    userEmail: "john.anderson@arbigrow.com",
+    packageName: "Starter Package",
+    amount: 1000,
+    roi: 20,
+    profitPaid: 200,
+    status: "active",
+  }
+
+  ]);
+  const [selectedInvestment, setSelectedInvestment] = useState(null)
   const [users, setUsers] = useState([]);
   const [activePage, setActivePage] = useState("dashboard");
   const [loading, setLoading] = useState(true);
@@ -65,6 +80,13 @@ export default function AdminDashboard() {
 
     case "networks":
       return <DepositNetworks />;
+      case "investments":
+     return (
+    <InvestmentsManagement
+      investments={investments}
+      setSelectedInvestment={setSelectedInvestment}
+    />
+  );
       case "reports":
       case "settings":
         return (
@@ -80,15 +102,24 @@ export default function AdminDashboard() {
     }
   };
 
-  return (
-    <AdminLayout
-      activePage={activePage}
-      setActivePage={setActivePage}
-      navigate={navigate}
-    >
-      {renderPageContent()}
+return (
+  <AdminLayout
+    activePage={activePage}
+    setActivePage={setActivePage}
+    navigate={navigate}
+  >
 
-      {/* Pass users as props */}
-    </AdminLayout>
-  );
+    {renderPageContent()}
+
+    {/* {selectedInvestment && (
+      <InvestmentDetailsModal
+        selectedInvestment={selectedInvestment}
+        setSelectedInvestment={setSelectedInvestment}
+        investments={investments}
+        setInvestments={setInvestments}
+      />
+    )} */}
+
+  </AdminLayout>
+);
 }
