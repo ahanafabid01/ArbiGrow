@@ -28,7 +28,9 @@ export default function EmailVerificationPage() {
     setError("");
     setInfo("");
 
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError("Email is required.");
       return;
     }
@@ -40,7 +42,7 @@ export default function EmailVerificationPage() {
 
     try {
       setIsVerifying(true);
-      const res = await verifyEmail({ email: email.trim(), otp });
+      const res = await verifyEmail({ email: normalizedEmail, otp });
       const message = res?.data?.message || "Email verified successfully.";
       setInfo(message);
       setStatus("success");
@@ -60,14 +62,16 @@ export default function EmailVerificationPage() {
     setError("");
     setInfo("");
 
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError("Enter your email first to resend OTP.");
       return;
     }
 
     try {
       setIsResending(true);
-      const res = await resendVerificationEmail(email.trim());
+      const res = await resendVerificationEmail(normalizedEmail);
       setInfo(res?.data?.message || "Verification OTP sent.");
     } catch (err) {
       const detail =

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
 import { useEffect, useState } from "react";
-import { refreshUserStore } from "../../api/user.api.js";
+import { getMyDeposits, refreshUserStore } from "../../api/user.api.js";
 
 const OverviewPage = ({
   mockUserData,
@@ -26,31 +26,43 @@ const OverviewPage = ({
 }) => {
   const { user, setUser } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
+  const [totalApprovedDeposits, setTotalApprovedDeposits] = useState(null);
 
   // console.log("global user store from OverviewPage", user);
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const response = await refreshUserStore();
-        // console.log("response from refreshUserStore", response.data);
+        const [userResponse, depositsResponse] = await Promise.all([
+          refreshUserStore(),
+          getMyDeposits(),
+        ]);
 
         // update global store
-        if (response?.status === 200) {
+        if (userResponse?.status === 200) {
           const updatedUser = {
             ...useUserStore.getState().user,
-            ...response.data.user,
+            ...userResponse.data.user,
           };
 
           setUser(updatedUser);
           // console.log("global user store after OverviewPage", user);
         }
+
+        const deposits = depositsResponse?.data?.data || [];
+        const approvedTotal = deposits.reduce((sum, deposit) => {
+          const isApproved = String(deposit?.status || "").toLowerCase() === "approved";
+          const amount = Number(deposit?.amount || 0);
+          return isApproved ? sum + (Number.isNaN(amount) ? 0 : amount) : sum;
+        }, 0);
+
+        setTotalApprovedDeposits(approvedTotal);
       } catch (error) {
         console.error("Failed to refresh user:", error);
       }
     };
 
     loadUser();
-  }, []);
+  }, [setUser]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -162,7 +174,10 @@ const OverviewPage = ({
           },
           {
             label: "Deposit Wallet",
-            balance: Number(user?.deposit_wallet ?? 0),
+            balance:
+              totalApprovedDeposits !== null
+                ? totalApprovedDeposits
+                : Number(user?.deposit_wallet ?? 0),
             description: "Total Deposited",
             icon: Download,
             currency: "USDT",

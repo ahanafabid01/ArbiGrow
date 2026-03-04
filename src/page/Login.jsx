@@ -63,10 +63,14 @@ export default function LoginForm() {
 
       setUser(res?.data?.user);
       setToken(res?.data?.access_token);
-      if (res?.data?.doc_submitted === false) {
+      if (!res?.data?.user?.email_verified) {
+        navigate(
+          `/email-verification?email=${encodeURIComponent(
+            formData.email.trim(),
+          )}`,
+        );
+      } else if (res?.data?.doc_submitted === false) {
         navigate("/verification-page");
-      } else if (!res?.data?.user?.email_verified) {
-        navigate("/email-verification");
       } else if (res?.data?.user?.is_admin) {
         navigate("/admin-dashboard");
       } else if (
@@ -79,7 +83,7 @@ export default function LoginForm() {
       } else if (
         res?.data?.kyc_status === "approved" &&
         res?.data?.doc_submitted === true &&
-        res?.data?.email_verified === true
+        res?.data?.user?.email_verified === true
       ) {
         navigate("/dashboard");
       } else {
