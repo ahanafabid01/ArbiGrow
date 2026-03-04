@@ -38,12 +38,10 @@ const ProfilePage = () => {
                   <h2 className="text-lg md:text-xl font-bold text-white">
                     {user.full_name}
                   </h2>
-                  {user.is_admin && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-xs text-green-400">
-                      <Check className="w-3 h-3" />
-                      Verified
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-xs text-green-400">
+                    <Check className="w-3 h-3" />
+                    Verified
+                  </span>
                 </div>
                 <p className="text-sm text-gray-400">@{user.username}</p>
               </div>
