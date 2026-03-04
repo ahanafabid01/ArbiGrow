@@ -44,6 +44,7 @@ import useUserStore from "../store/userStore.js";
 import { LogOut } from "lucide-react";
 import TransactionHistoryPage from "../component/user/TransactionHistoryPage.jsx";
 import { getReferralNetwork } from "../api/user.api.js";
+import DepositPage from "../component/user/DepositUSDT.jsx";
 // Mock data for market prices
 
 const EMPTY_REFERRAL_LEVELS = [
@@ -148,7 +149,7 @@ export function UserDashboard() {
       label: "Deposit",
       icon: Download,
       description: "Add funds",
-      comingSoon: true,
+      
     },
     {
       id: "packages",
@@ -311,7 +312,10 @@ export function UserDashboard() {
         />
       );
     }
-
+            if (activePage === "deposit") {
+   return <DepositPage />;
+   }
+  
     if (activePage !== "overview") {
       return (
         <div className="min-h-screen flex items-center justify-center p-6">
@@ -325,7 +329,7 @@ export function UserDashboard() {
         </div>
       );
     }
-
+     
     if (activePage === "overview") {
       return (
         <OverviewPage
@@ -346,8 +350,9 @@ export function UserDashboard() {
         />
       );
     }
+ 
   };
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0e27] via-[#0d1137] to-[#0a0e27] text-white">
       {/* Background Elements */}

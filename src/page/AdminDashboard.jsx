@@ -5,6 +5,8 @@ import UserManagement from "../component/admin/UserManagement.jsx";
 import DashboardOverview from "../component/admin/DashboardOverview.jsx";
 import { getAllUsers } from "../api/admin.api.js";
 import useUserStore from "../store/userStore.js";
+import DepositRequests from "../component/admin/DepositRequests.jsx";
+import DepositNetworks from "../component/admin/DepositNetworks.jsx";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -58,6 +60,11 @@ export default function AdminDashboard() {
         return <DashboardOverview users={users} />;
       case "users":
         return <UserManagement users={users} setUsers={setUsers} />;
+         case "deposits":
+      return <DepositRequests />;
+
+    case "networks":
+      return <DepositNetworks />;
       case "reports":
       case "settings":
         return (

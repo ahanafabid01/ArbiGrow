@@ -11,6 +11,8 @@ import {
   X,
   Menu,
   LogOut,
+   Wallet,      // ✅ add
+  Network,
 } from "lucide-react";
 import logo from "../../assets/Arbigrow-Logo.png";
 import { useNavigate } from "react-router-dom";
@@ -26,33 +28,45 @@ export default function AdminLayout({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const adminPages = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      description: "Overview & Analytics",
-    },
-    {
-      id: "users",
-      label: "User Management",
-      icon: Users,
-      description: "Manage all users",
-    },
-    {
-      id: "reports",
-      label: "Reports",
-      icon: TrendingUp,
-      description: "Coming Soon",
-      disabled: true,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      description: "Coming Soon",
-      disabled: true,
-    },
-  ];
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    description: "Overview & Analytics",
+  },
+  {
+    id: "users",
+    label: "User Management",
+    icon: Users,
+    description: "Manage all users",
+  },
+  {
+    id: "deposits",
+    label: "Deposit Requests",
+    icon: Wallet,
+    description: "Manage deposits",
+  },
+  {
+    id: "networks",
+    label: "Deposit Networks",
+    icon: Network,
+    description: "Manage networks",
+  },
+  {
+    id: "reports",
+    label: "Reports",
+    icon: TrendingUp,
+    description: "Coming Soon",
+    disabled: true,
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    description: "Coming Soon",
+    disabled: true,
+  },
+];
   const logout = useUserStore((state) => state.logout);
 
   const handleLogout = () => {
