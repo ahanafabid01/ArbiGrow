@@ -505,3 +505,115 @@ export const generateMockTransactions = () => {
 
   return [...baseInvestments, ...additionalInvestments];
 };
+
+
+// user investmenet mocData
+// Mock Investment Data
+
+export const mockInvestments = [
+  {
+    id: '1',
+    packageName: 'Starter AI Trading',
+    status: 'active',
+    investedAmount: 500,
+    expectedProfit: 750,
+    profitEarned: 125.50,
+    dailyReturn: 0,
+    startDate: 'Feb 15, 2026',
+    endDate: 'May 15, 2026',
+    durationDays: 90,
+    daysElapsed: 18,
+    dailyProfit: 2.78,
+    profitHistory: [
+      { date: 'Mar 4, 2026', amount: 2.78, type: 'Daily Profit' },
+      { date: 'Mar 3, 2026', amount: 2.78, type: 'Daily Profit' },
+      { date: 'Mar 2, 2026', amount: 2.78, type: 'Daily Profit' },
+      { date: 'Mar 1, 2026', amount: 2.78, type: 'Daily Profit' },
+      { date: 'Feb 28, 2026', amount: 2.78, type: 'Daily Profit' },
+    ]
+  },
+  {
+    id: '2',
+    packageName: 'Professional DeFi Pool',
+    status: 'active',
+    investedAmount: 2000,
+    expectedProfit: 3600,
+    profitEarned: 480.00,
+    dailyReturn: 0,
+    startDate: 'Jan 20, 2026',
+    endDate: 'Apr 20, 2026',
+    durationDays: 90,
+    daysElapsed: 43,
+    dailyProfit: 11.16,
+    profitHistory: [
+      { date: 'Mar 4, 2026', amount: 11.16, type: 'Daily Profit' },
+      { date: 'Mar 3, 2026', amount: 11.16, type: 'Daily Profit' },
+      { date: 'Mar 2, 2026', amount: 11.16, type: 'Daily Profit' },
+      { date: 'Mar 1, 2026', amount: 11.16, type: 'Daily Profit' },
+      { date: 'Feb 28, 2026', amount: 11.16, type: 'Daily Profit' },
+    ]
+  },
+  {
+    id: '3',
+    packageName: 'Premium Arbitrage Bot',
+    status: 'active',
+    investedAmount: 5000,
+    expectedProfit: 10500,
+    profitEarned: 1750.00,
+    dailyReturn: 0,
+    startDate: 'Dec 10, 2025',
+    endDate: 'Jun 10, 2026',
+    durationDays: 180,
+    daysElapsed: 84,
+    dailyProfit: 29.17,
+    profitHistory: [
+      { date: 'Mar 4, 2026', amount: 29.17, type: 'Daily Profit' },
+      { date: 'Mar 3, 2026', amount: 29.17, type: 'Daily Profit' },
+      { date: 'Mar 2, 2026', amount: 29.17, type: 'Daily Profit' },
+      { date: 'Mar 1, 2026', amount: 29.17, type: 'Daily Profit' },
+      { date: 'Feb 28, 2026', amount: 29.17, type: 'Daily Profit' },
+    ]
+  },
+  {
+    id: '4',
+    packageName: 'Elite Market Maker',
+    status: 'completed',
+    investedAmount: 10000,
+    expectedProfit: 25000,
+    profitEarned: 25000.00,
+    dailyReturn: 0,
+    startDate: 'Aug 1, 2025',
+    endDate: 'Feb 1, 2026',
+    durationDays: 180,
+    daysElapsed: 180,
+    dailyProfit: 69.44,
+    profitHistory: [
+      { date: 'Feb 1, 2026', amount: 69.44, type: 'Daily Profit' },
+      { date: 'Jan 31, 2026', amount: 69.44, type: 'Daily Profit' },
+      { date: 'Jan 30, 2026', amount: 69.44, type: 'Daily Profit' },
+      { date: 'Jan 29, 2026', amount: 69.44, type: 'Daily Profit' },
+      { date: 'Jan 28, 2026', amount: 69.44, type: 'Daily Profit' },
+    ]
+  },
+  {
+    id: '5',
+    packageName: 'Advanced Liquidity Mining',
+    status: 'active',
+    investedAmount: 1500,
+    expectedProfit: 2400,
+    profitEarned: 300.00,
+    dailyReturn: 0,
+    startDate: 'Feb 1, 2026',
+    endDate: 'May 1, 2026',
+    durationDays: 90,
+    daysElapsed: 32,
+    dailyProfit: 10.00,
+    profitHistory: [
+      { date: 'Mar 4, 2026', amount: 10.00, type: 'Daily Profit' },
+      { date: 'Mar 3, 2026', amount: 10.00, type: 'Daily Profit' },
+      { date: 'Mar 2, 2026', amount: 10.00, type: 'Daily Profit' },
+      { date: 'Mar 1, 2026', amount: 10.00, type: 'Daily Profit' },
+      { date: 'Feb 28, 2026', amount: 10.00, type: 'Daily Profit' },
+    ]
+  }
+];

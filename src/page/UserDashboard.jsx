@@ -35,6 +35,7 @@ import {
   mockMarketPrices,
   mockUserData,
   generateMockTransactions,
+  mockInvestments,
 } from "../constants/mockdata.js";
 import { useNavigate } from "react-router-dom";
 import ReferralPage from "../component/user/ReferralPage.jsx";
@@ -47,6 +48,7 @@ import { getReferralNetwork } from "../api/user.api.js";
 import DepositPage from "../component/user/DepositUSDT.jsx";
 import TierSection from "../component/package/TierSection.jsx";
 import PackageModal from "../component/package/PackageModal.jsx";
+import { MyInvestments } from "../component/user/MyInvestments.jsx";
 // Mock data for market prices
 
 const EMPTY_REFERRAL_LEVELS = [
@@ -166,7 +168,7 @@ export function UserDashboard() {
       label: "My Investments",
       icon: TrendingUp,
       description: "Active investments",
-      comingSoon: true,
+      
     },
     {
       id: "withdraw",
@@ -318,7 +320,15 @@ export function UserDashboard() {
             if (activePage === "deposit") {
           return <DepositPage />;
          }
-
+         //investment
+       if (activePage === "investments") {
+  return (
+    <MyInvestments
+      investments={mockInvestments}
+      onNavigateToPackages={() => setActivePage("packages")}
+    />
+  );
+}
          //packege moddal
          if (activePage === "packages") {
   return (
@@ -331,6 +341,8 @@ export function UserDashboard() {
       />
     </>
   );
+  // investment
+   
 }
   
     if (activePage !== "overview") {
