@@ -7,15 +7,10 @@ import {
   Upload,
   Users,
   TrendingUp,
-  TrendingDown,
-  ChevronLeft,
-  ChevronRight,
   Pickaxe,
-  Lock,
-  X,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getMyDeposits,
   refreshUserStore,
@@ -29,31 +24,42 @@ const OverviewPage = ({
   arbxCardImg,
   arbxCoinImg,
 }) => {
-  const { user, setUser } = useUserStore();
+  const MINING_CYCLE_MS = 24 * 60 * 60 * 1000;
+  const { user, setUser, logout } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
   const [totalApprovedDeposits, setTotalApprovedDeposits] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
+  const [isMiningActionLoading, setIsMiningActionLoading] = useState(false);
+  const [miningActionError, setMiningActionError] = useState("");
   const isMiningActive = user?.is_mining && user?.mining_started_at;
+
+  const syncUserFromServer = useCallback(async () => {
+    const userResponse = await refreshUserStore();
+    if (userResponse?.status === 200 && userResponse?.data?.user) {
+      setUser(userResponse.data.user);
+    }
+    return userResponse;
+  }, [setUser]);
+
+  const handleUnauthorized = useCallback(
+    (error) => {
+      if (error?.response?.status !== 401) return false;
+
+      logout();
+      window.location.href = "/login";
+      return true;
+    },
+    [logout],
+  );
 
   // console.log("global user store from OverviewPage", user);
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const [userResponse, depositsResponse] = await Promise.all([
-          refreshUserStore(),
+        const [, depositsResponse] = await Promise.all([
+          syncUserFromServer(),
           getMyDeposits(),
         ]);
-
-        // update global store
-        if (userResponse?.status === 200) {
-          const updatedUser = {
-            ...useUserStore.getState().user,
-            ...userResponse.data.user,
-          };
-
-          setUser(updatedUser);
-          console.log("global user store after OverviewPage", user);
-        }
 
         const deposits = depositsResponse?.data?.data || [];
         const approvedTotal = deposits.reduce((sum, deposit) => {
@@ -65,18 +71,22 @@ const OverviewPage = ({
 
         setTotalApprovedDeposits(approvedTotal);
       } catch (error) {
+        if (handleUnauthorized(error)) return;
         console.error("Failed to refresh user:", error);
       }
     };
 
     loadUser();
-  }, [setUser]);
+  }, [handleUnauthorized, setUser, syncUserFromServer]);
 
   useEffect(() => {
-    if (!user?.is_mining || !user?.mining_started_at) return;
+    if (!user?.is_mining || !user?.mining_started_at) {
+      setRemainingTime(null);
+      return;
+    }
 
     const start = new Date(user.mining_started_at).getTime();
-    const end = start + 24 * 60 * 60 * 1000;
+    const end = start + MINING_CYCLE_MS;
 
     const updateTimer = () => {
       const now = Date.now();
@@ -95,7 +105,7 @@ const OverviewPage = ({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [user?.is_mining, user?.mining_started_at]);
+  }, [MINING_CYCLE_MS, user?.is_mining, user?.mining_started_at]);
 
   const formatTime = (ms) => {
     if (!ms) return "00:00:00";
@@ -112,28 +122,60 @@ const OverviewPage = ({
   };
 
   const handleStartMining = async () => {
+    if (isMiningActionLoading) return;
+
+    setMiningActionError("");
+    setIsMiningActionLoading(true);
     try {
-      await startMining();
+      const response = await startMining();
+      const miningStartedAt =
+        response?.data?.mining_started_at || new Date().toISOString();
 
-      // console.log("START MINING RESPONSE:", res.data);
+      setUser({
+        is_mining: true,
+        mining_started_at: miningStartedAt,
+      });
+      setRemainingTime(MINING_CYCLE_MS);
 
-      await refreshUserStore(); // refresh store
+      syncUserFromServer().catch(() => null);
     } catch (err) {
+      if (handleUnauthorized(err)) return;
+      const detail = err?.response?.data?.detail || "Failed to start mining.";
+      setMiningActionError(detail);
       console.error(err?.response?.data || err);
+    } finally {
+      setIsMiningActionLoading(false);
     }
   };
 
   const handleClaimMining = async () => {
+    if (isMiningActionLoading) return;
+
+    setMiningActionError("");
+    setIsMiningActionLoading(true);
     try {
-      await claimMining();
+      const response = await claimMining();
+      setUser({
+        is_mining: false,
+        mining_started_at: null,
+        arbx_mining_wallet:
+          response?.data?.arbx_mining_wallet ?? user?.arbx_mining_wallet,
+      });
+      setRemainingTime(null);
 
-      // console.log("CLAIM RESPONSE:", res.data);
-
-      await refreshUserStore();
+      syncUserFromServer().catch(() => null);
     } catch (err) {
+      if (handleUnauthorized(err)) return;
+      const detail = err?.response?.data?.detail || "Failed to claim reward.";
+      setMiningActionError(detail);
       console.error(err?.response?.data || err);
+    } finally {
+      setIsMiningActionLoading(false);
     }
   };
+
+  const canClaim = isMiningActive && remainingTime !== null && remainingTime <= 0;
+  const isTimerRunning = isMiningActive && !canClaim;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -464,26 +506,29 @@ const OverviewPage = ({
             onClick={
               !isMiningActive
                 ? handleStartMining
-                : remainingTime === 0
+                : canClaim
                   ? handleClaimMining
-                  : null
+                : null
             }
-            disabled={isMiningActive && remainingTime > 0}
+            disabled={isMiningActionLoading || isTimerRunning}
             className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 ${
-              isMiningActive && remainingTime > 0
+              isMiningActionLoading || isTimerRunning
                 ? "bg-gray-600 cursor-not-allowed"
                 : "bg-gradient-to-r from-yellow-600 to-orange-600"
             }`}
           >
             <Pickaxe className="w-5 h-5" />
 
-            {!isMiningActive && "Start Mining"}
+            {!isMiningActive && (isMiningActionLoading ? "Starting..." : "Start Mining")}
 
-            {isMiningActive && remainingTime > 0 && formatTime(remainingTime)}
+            {isTimerRunning && formatTime(remainingTime)}
 
-            {isMiningActive && remainingTime === 0 && "Claim Reward"}
+            {canClaim && (isMiningActionLoading ? "Claiming..." : "Claim Reward")}
           </button>
         </div>
+        {miningActionError && (
+          <p className="mt-3 text-sm text-red-400">{miningActionError}</p>
+        )}
       </motion.div>
     </div>
   );

@@ -1,8 +1,24 @@
 import useUserStore from "../store/userStore.js";
 import api from "./axiosInstance.js";
 
+const normalizeAccessToken = (value) => {
+  if (!value) return null;
+
+  let token = String(value).trim();
+
+  if (token.toLowerCase().startsWith("bearer ")) {
+    token = token.slice(7).trim();
+  }
+
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1).trim();
+  }
+
+  return token || null;
+};
+
 const authHeaders = () => {
-  const token = useUserStore.getState().token;
+  const token = normalizeAccessToken(useUserStore.getState().token);
   return token
     ? {
         headers: {

@@ -13,7 +13,32 @@ try {
   localStorage.removeItem("user");
 }
 
-const savedToken = localStorage.getItem("token") || null;
+const normalizeAccessToken = (value) => {
+  if (!value) return null;
+
+  let token = String(value).trim();
+
+  try {
+    const parsed = JSON.parse(token);
+    if (typeof parsed === "string") {
+      token = parsed.trim();
+    }
+  } catch {
+    // Keep raw token if it is not JSON encoded.
+  }
+
+  if (token.toLowerCase().startsWith("bearer ")) {
+    token = token.slice(7).trim();
+  }
+
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1).trim();
+  }
+
+  return token || null;
+};
+
+const savedToken = normalizeAccessToken(localStorage.getItem("token"));
 
 const useUserStore = create((set, get) => ({
   user: savedUser,
@@ -38,8 +63,15 @@ const useUserStore = create((set, get) => ({
   },
 
   setToken: (token) => {
-    localStorage.setItem("token", token);
-    set({ token });
+    const normalizedToken = normalizeAccessToken(token);
+
+    if (normalizedToken) {
+      localStorage.setItem("token", normalizedToken);
+    } else {
+      localStorage.removeItem("token");
+    }
+
+    set({ token: normalizedToken });
   },
 
   setUserDetails: (details) => {
