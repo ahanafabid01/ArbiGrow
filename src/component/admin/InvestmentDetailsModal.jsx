@@ -121,6 +121,33 @@ export function InvestmentDetailsModal({ investment, onClose, onAddProfit }) {
               </div>
             </div>
 
+            {/* Add Profit Button */}
+            {investment.status === 'active' &&
+              investment.profitPaid < investment.expectedProfit && (
+                <div className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30">
+                  <div className="flex items-center justify-between">
+
+                    <div>
+                      <h4 className="font-bold text-white mb-1">
+                        Distribute Profit
+                      </h4>
+                      <p className="text-sm text-gray-400">
+                        Manually add profit to user's main wallet
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={onAddProfit}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Profit
+                    </button>
+
+                  </div>
+                </div>
+              )}
+
             {/* Profit History */}
             <div>
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -163,33 +190,6 @@ export function InvestmentDetailsModal({ investment, onClose, onAddProfit }) {
                 </div>
               )}
             </div>
-
-            {/* Add Profit Button */}
-            {investment.status === 'active' &&
-              investment.profitPaid < investment.expectedProfit && (
-                <div className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30">
-                  <div className="flex items-center justify-between">
-
-                    <div>
-                      <h4 className="font-bold text-white mb-1">
-                        Distribute Profit
-                      </h4>
-                      <p className="text-sm text-gray-400">
-                        Manually add profit to user's main wallet
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={onAddProfit}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Profit
-                    </button>
-
-                  </div>
-                </div>
-              )}
 
             {/* Status Badge */}
             <div className="flex items-center justify-center">

@@ -1,46 +1,160 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../Button";
 import useUserStore from "../../store/userStore";
+import {
+  buyInvestment,
+  getMyInvestments,
+  refreshUserStore,
+} from "../../api/user.api";
 
-export default function PackageModal({ selectedPackage, setSelectedPackage }) {
- const token = useUserStore((state) => state.token);
- const isLoggedIn = !!token;
+export default function PackageModal({
+  selectedPackage,
+  setSelectedPackage,
+  onPurchased,
+}) {
+  const navigate = useNavigate();
+  const token = useUserStore((state) => state.token);
+  const setUser = useUserStore((state) => state.setUser);
+  const isLoggedIn = !!token;
 
- console.log("Login", isLoggedIn)
-  if (!selectedPackage) return null;
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
+  const [purchaseSuccess, setPurchaseSuccess] = useState("");
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
+  const [minimumAllowedAmount, setMinimumAllowedAmount] = useState(0);
 
-  // ===== ROI CONFIG =====
   const DAILY_ROI = 3;
   const TOTAL_ROI_LIMIT = 150;
-
-  // ===== CALCULATIONS =====
   const duration = Math.ceil(TOTAL_ROI_LIMIT / DAILY_ROI);
 
-  const dailyProfit =
-    (selectedPackage.amount * DAILY_ROI) / 100;
+  useEffect(() => {
+    setPurchaseError("");
+    setPurchaseSuccess("");
+    setIsPurchasing(false);
+  }, [selectedPackage]);
 
-  const totalProfit =
-    (selectedPackage.amount * TOTAL_ROI_LIMIT) / 100;
+  useEffect(() => {
+    const loadEligibility = async () => {
+      if (!selectedPackage || !isLoggedIn) {
+        setEligibilityLoading(false);
+        setMinimumAllowedAmount(0);
+        return;
+      }
 
-  const totalReturn =
-    selectedPackage.amount + totalProfit;
+      setEligibilityLoading(true);
+
+      try {
+        const response = await getMyInvestments();
+        const items = Array.isArray(response?.data) ? response.data : [];
+        const now = Date.now();
+
+        const highestActiveAmount = items.reduce((maxAmount, investment) => {
+          const endDate = new Date(investment?.end_date).getTime();
+          const amount = Number(investment?.invested_amount ?? 0);
+          const isInDuration = !Number.isNaN(endDate) && endDate > now;
+
+          if (!isInDuration) {
+            return maxAmount;
+          }
+
+          return Math.max(maxAmount, amount);
+        }, 0);
+
+        setMinimumAllowedAmount(highestActiveAmount);
+      } catch {
+        setMinimumAllowedAmount(0);
+      } finally {
+        setEligibilityLoading(false);
+      }
+    };
+
+    loadEligibility();
+  }, [selectedPackage, isLoggedIn]);
+
+  if (!selectedPackage) return null;
+
+  const dailyProfit = (selectedPackage.amount * DAILY_ROI) / 100;
+  const totalProfit = (selectedPackage.amount * TOTAL_ROI_LIMIT) / 100;
+  const totalReturn = selectedPackage.amount + totalProfit;
+  const isLowerPackage =
+    isLoggedIn && selectedPackage.amount < minimumAllowedAmount;
+
+  const handleClose = () => {
+    setPurchaseError("");
+    setPurchaseSuccess("");
+    setIsPurchasing(false);
+    setSelectedPackage(null);
+  };
+
+  const handlePurchase = async () => {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    if (isLowerPackage) {
+      setPurchaseError(
+        `You can only buy ${minimumAllowedAmount.toLocaleString()} USDT or higher until your current package duration ends.`,
+      );
+      return;
+    }
+
+    setIsPurchasing(true);
+    setPurchaseError("");
+    setPurchaseSuccess("");
+
+    try {
+      const payload = {
+        package_name: selectedPackage.name,
+        amount: selectedPackage.amount,
+        roi_percent: TOTAL_ROI_LIMIT,
+        duration_days: duration,
+      };
+
+      const purchaseResponse = await buyInvestment(payload);
+
+      try {
+        const userResponse = await refreshUserStore();
+        if (userResponse?.data?.user) {
+          setUser(userResponse.data.user);
+        }
+      } catch {
+        // Purchase succeeded, wallet refresh can be retried later.
+      }
+
+      setPurchaseSuccess("Package activated successfully.");
+      onPurchased?.(purchaseResponse?.data);
+
+      setTimeout(() => {
+        handleClose();
+      }, 1000);
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map((item) => item?.msg).filter(Boolean).join(", ")
+        : detail || "Failed to activate package";
+      setPurchaseError(message);
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   return (
     <AnimatePresence>
       {selectedPackage && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSelectedPackage(null)}
+            onClick={handleClose}
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Modal */}
           <motion.div
             key="modal"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -52,36 +166,26 @@ export default function PackageModal({ selectedPackage, setSelectedPackage }) {
               onClick={(e) => e.stopPropagation()}
               className="relative w-full max-w-2xl rounded-2xl border border-white/10 bg-gradient-to-b from-[#0d1428] to-[#0a0e27] p-8 shadow-2xl"
             >
-              {/* Close Button */}
               <button
                 type="button"
-                onClick={() => setSelectedPackage(null)}
+                onClick={handleClose}
                 className="absolute right-4 top-4 rounded-lg p-2 text-gray-400 hover:bg-white/5 hover:text-white"
               >
                 <X className="size-5" />
               </button>
 
-              {/* Header */}
               <div className="mb-6">
                 <h2 className="text-3xl font-bold text-white">
                   {selectedPackage.tier}
                 </h2>
-
-                <p className="mt-2 text-gray-400">
-                  Investment Package Overview
-                </p>
+                <p className="mt-2 text-gray-400">Investment Package Overview</p>
               </div>
 
-              {/* ===== SINGLE INFO BOX ===== */}
               <div className="mb-8 rounded-xl border border-white/10 bg-white/5 p-6">
-
                 <div className="grid grid-cols-2 gap-6 text-sm">
-
                   <div>
                     <p className="text-gray-400">Package Name</p>
-                    <p className="font-semibold text-white">
-                      {selectedPackage.name}
-                    </p>
+                    <p className="font-semibold text-white">{selectedPackage.name}</p>
                   </div>
 
                   <div>
@@ -93,16 +197,12 @@ export default function PackageModal({ selectedPackage, setSelectedPackage }) {
 
                   <div>
                     <p className="text-gray-400">Duration</p>
-                    <p className="font-semibold text-white">
-                      {duration} Days
-                    </p>
+                    <p className="font-semibold text-white">{duration} Days</p>
                   </div>
 
                   <div>
                     <p className="text-gray-400">ROI</p>
-                    <p className="font-semibold text-green-400">
-                      {DAILY_ROI}% Daily
-                    </p>
+                    <p className="font-semibold text-green-400">{DAILY_ROI}% Daily</p>
                   </div>
 
                   <div>
@@ -118,21 +218,48 @@ export default function PackageModal({ selectedPackage, setSelectedPackage }) {
                       {dailyProfit.toFixed(2)} USDT
                     </p>
                   </div>
-
                 </div>
               </div>
 
-              {/* CTA */}
-             {isLoggedIn && (
-            <Button variant="gradient">
-            Proceed to Secure Allocation
-            </Button>
-            )}
+              {!isLoggedIn && (
+                <Button variant="gradient" onClick={handlePurchase}>
+                  Login to Continue
+                </Button>
+              )}
+
+              {isLoggedIn && eligibilityLoading && (
+                <div className="rounded-xl border border-white/10 bg-white/5 py-3 text-center text-sm text-gray-300">
+                  Checking package eligibility...
+                </div>
+              )}
+
+              {isLoggedIn && !eligibilityLoading && !isLowerPackage && (
+                <Button
+                  variant="gradient"
+                  onClick={handlePurchase}
+                  disabled={isPurchasing}
+                >
+                  {isPurchasing ? "Allocating..." : "Proceed to Secure Allocation"}
+                </Button>
+              )}
+
+              {isLoggedIn && !eligibilityLoading && isLowerPackage && (
+                <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 py-3 text-center text-sm text-amber-300">
+                  Lower package locked. You can buy {minimumAllowedAmount.toLocaleString()} USDT or higher.
+                </p>
+              )}
+
+              {purchaseError && (
+                <p className="mt-3 text-center text-sm text-red-400">{purchaseError}</p>
+              )}
+
+              {purchaseSuccess && (
+                <p className="mt-3 text-center text-sm text-green-400">{purchaseSuccess}</p>
+              )}
 
               <p className="mt-4 text-center text-xs text-gray-500">
                 Requires wallet connection and compliance verification
               </p>
-
             </div>
           </motion.div>
         </>

@@ -39,3 +39,15 @@ export const startMining = () => {
 export const claimMining = () => {
   return api.post("v1/user/claim-mining", {}, authHeaders());
 };
+
+export const buyInvestment = (payload) => {
+  return api.post("v1/investments/buy", payload, authHeaders());
+};
+
+export const getMyInvestments = () => {
+  return api.get("v1/investments/my", authHeaders());
+};
+
+export const getMyInvestmentDetails = (investmentId) => {
+  return api.get(`v1/investments/${investmentId}`, authHeaders());
+};

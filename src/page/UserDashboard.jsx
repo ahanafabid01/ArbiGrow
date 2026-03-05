@@ -35,7 +35,6 @@ import {
   mockMarketPrices,
   mockUserData,
   generateMockTransactions,
-  mockInvestments,
 } from "../constants/mockdata.js";
 import { useNavigate } from "react-router-dom";
 import ReferralPage from "../component/user/ReferralPage.jsx";
@@ -61,6 +60,7 @@ const EMPTY_REFERRAL_LEVELS = [
 
 export function UserDashboard() {
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [investmentsRefreshKey, setInvestmentsRefreshKey] = useState(0);
   const [activePage, setActivePage] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -321,29 +321,32 @@ export function UserDashboard() {
           return <DepositPage />;
          }
          //investment
-       if (activePage === "investments") {
-  return (
-    <MyInvestments
-      investments={mockInvestments}
-      onNavigateToPackages={() => setActivePage("packages")}
-    />
-  );
-}
+    if (activePage === "investments") {
+      return (
+        <MyInvestments
+          refreshKey={investmentsRefreshKey}
+          onNavigateToPackages={() => setActivePage("packages")}
+        />
+      );
+    }
          //packege moddal
-         if (activePage === "packages") {
-  return (
-    <>
-      <TierSection onSelect={setSelectedPackage} />
+    if (activePage === "packages") {
+      return (
+        <>
+          <TierSection onSelect={setSelectedPackage} />
 
-      <PackageModal
-        selectedPackage={selectedPackage}
-        setSelectedPackage={setSelectedPackage}
-      />
-    </>
-  );
-  // investment
-   
-}
+          <PackageModal
+            selectedPackage={selectedPackage}
+            setSelectedPackage={setSelectedPackage}
+            onPurchased={() => {
+              setInvestmentsRefreshKey((prev) => prev + 1);
+              setActivePage("investments");
+            }}
+          />
+        </>
+      );
+      // investment
+    }
   
     if (activePage !== "overview") {
       return (

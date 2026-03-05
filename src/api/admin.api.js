@@ -98,3 +98,51 @@ export const updateDepositStatus = async (token, depositId, status) => {
   );
   return res.data || {};
 };
+
+export const getAdminInvestments = async (
+  token,
+  { page = 1, statusFilter = "", search = "" } = {},
+) => {
+  const params = new URLSearchParams();
+  params.append("page", page);
+
+  if (statusFilter && statusFilter !== "all") {
+    params.append("status_filter", statusFilter);
+  }
+
+  if (search && search.trim() !== "") {
+    params.append("search", search.trim());
+  }
+
+  const res = await api.get(
+    `v1/admin/investments/?${params.toString()}`,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const getAdminInvestmentDetails = async (token, investmentId) => {
+  const res = await api.get(
+    `v1/admin/investments/${investmentId}`,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const addAdminInvestmentProfit = async (
+  token,
+  investmentId,
+  percentage,
+) => {
+  const res = await api.post(
+    `v1/admin/investments/${investmentId}/add-profit`,
+    { percentage },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const getAdminDashboardOverview = async (token) => {
+  const res = await api.get("v1/admin/dashboard-overview", authHeaders(token));
+  return res.data || {};
+};

@@ -1,26 +1,118 @@
-import { useState } from 'react';
-import { InvestmentSummaryCards } from './InvestmentSummaryCards';
-import { InvestmentCard } from './InvestmentCard';
-import { InvestmentEmptyState } from './InvestmentEmptyState';
-import { InvestmentDetailsModal } from './InvestmentDetailsModal';
-// import { InvestmentSummaryCards } from './InvestmentSummaryCards';
-// import { InvestmentCard } from './InvestmentCard';
-// import { InvestmentDetailsModal } from './InvestmentDetailsModal';
-// import { InvestmentEmptyState } from './InvestmentEmptyState';
+import { useEffect, useMemo, useState } from "react";
+import { InvestmentSummaryCards } from "./InvestmentSummaryCards";
+import { InvestmentCard } from "./InvestmentCard";
+import { InvestmentEmptyState } from "./InvestmentEmptyState";
+import { InvestmentDetailsModal } from "./InvestmentDetailsModal";
+import { getMyInvestments as fetchMyInvestments } from "../../api/user.api.js";
 
-export function MyInvestments({ investments, onNavigateToPackages }) {
+const toNumber = (value) => Number(value ?? 0);
+
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getDurationDays = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 1;
+
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / 86400000);
+  return Math.max(1, diffDays);
+};
+
+const getDaysElapsed = (startDate, durationDays) => {
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) return 0;
+
+  const elapsed = Math.floor((Date.now() - start.getTime()) / 86400000);
+  return Math.min(durationDays, Math.max(0, elapsed));
+};
+
+const mapInvestment = (investment) => {
+  const investedAmount = toNumber(investment.invested_amount);
+  const expectedProfit = toNumber(investment.expected_profit);
+  const profitEarned = toNumber(investment.profit_earned);
+  const durationDays =
+    toNumber(investment.duration_days) ||
+    getDurationDays(investment.start_date, investment.end_date);
+  const daysElapsed = Math.min(
+    durationDays,
+    toNumber(investment.days_elapsed) ||
+      getDaysElapsed(investment.start_date, durationDays),
+  );
+  const dailyProfit =
+    toNumber(investment.daily_profit) || expectedProfit / durationDays;
+
+  return {
+    id: investment.id,
+    packageName: investment.package_name,
+    status: investment.status,
+    investedAmount,
+    expectedProfit,
+    profitEarned,
+    startDate: formatDate(investment.start_date),
+    endDate: formatDate(investment.end_date),
+    durationDays,
+    daysElapsed,
+    dailyProfit,
+    roiPercent: toNumber(investment.roi_percent),
+    profitHistory: [],
+  };
+};
+
+export function MyInvestments({ refreshKey, onNavigateToPackages }) {
   const [selectedInvestment, setSelectedInvestment] = useState(null);
+  const [investments, setInvestments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Calculate summary statistics
-  const activeInvestments = investments.filter(inv => inv.status === 'active');
-  const totalInvested = investments.reduce((sum, inv) => sum + inv.investedAmount, 0);
-  const totalExpectedProfit = investments.reduce((sum, inv) => sum + inv.expectedProfit, 0);
-  const totalProfitEarned = investments.reduce((sum, inv) => sum + inv.profitEarned, 0);
+  const loadInvestments = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetchMyInvestments();
+      const items = Array.isArray(response?.data) ? response.data : [];
+      setInvestments(items.map(mapInvestment));
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setError(detail || "Failed to load investments.");
+      setInvestments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvestments();
+  }, [refreshKey]);
+
+  const summary = useMemo(() => {
+    const activeInvestments = investments.filter((inv) => inv.status === "active");
+
+    return {
+      totalInvested: investments.reduce((sum, inv) => sum + inv.investedAmount, 0),
+      totalExpectedProfit: investments.reduce(
+        (sum, inv) => sum + inv.expectedProfit,
+        0,
+      ),
+      totalProfitEarned: investments.reduce((sum, inv) => sum + inv.profitEarned, 0),
+      activeInvestmentsCount: activeInvestments.length,
+    };
+  }, [investments]);
 
   return (
     <>
       <div className="p-4 md:p-6 space-y-6">
-        {/* Page Header */}
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">
             <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
@@ -32,32 +124,41 @@ export function MyInvestments({ investments, onNavigateToPackages }) {
           </p>
         </div>
 
-        {/* Portfolio Summary Cards */}
-        <InvestmentSummaryCards
-          totalInvested={totalInvested}
-          totalExpectedProfit={totalExpectedProfit}
-          totalProfitEarned={totalProfitEarned}
-          activeInvestmentsCount={activeInvestments.length}
-        />
-
-        {/* Investment Cards Grid */}
-        {investments.length > 0 ? (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
-            {investments.map((investment, index) => (
-              <InvestmentCard
-                key={investment.id}
-                investment={investment}
-                index={index}
-                onViewDetails={setSelectedInvestment}
-              />
-            ))}
+        {loading ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-300">
+            Loading investments...
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-sm text-red-300">
+            {error}
           </div>
         ) : (
-          <InvestmentEmptyState onBrowsePackages={onNavigateToPackages} />
+          <>
+            <InvestmentSummaryCards
+              totalInvested={summary.totalInvested}
+              totalExpectedProfit={summary.totalExpectedProfit}
+              totalProfitEarned={summary.totalProfitEarned}
+              activeInvestmentsCount={summary.activeInvestmentsCount}
+            />
+
+            {investments.length > 0 ? (
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                {investments.map((investment, index) => (
+                  <InvestmentCard
+                    key={investment.id}
+                    investment={investment}
+                    index={index}
+                    onViewDetails={setSelectedInvestment}
+                  />
+                ))}
+              </div>
+            ) : (
+              <InvestmentEmptyState onBrowsePackages={onNavigateToPackages} />
+            )}
+          </>
         )}
       </div>
 
-      {/* Investment Details Modal */}
       <InvestmentDetailsModal
         investment={selectedInvestment}
         onClose={() => setSelectedInvestment(null)}

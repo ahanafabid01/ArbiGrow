@@ -11,49 +11,40 @@ import { InvestmentsManagement } from "../component/admin/InvestmentsManagement.
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const logout = useUserStore((state) => state.logout);
 
-  // ✅ State
-  const [investments, setInvestments] = useState([
-    {
-    id: 1,
-    userName: "John Anderson",
-    userEmail: "john.anderson@arbigrow.com",
-    packageName: "Starter Package",
-    amount: 1000,
-    roi: 20,
-    profitPaid: 200,
-    status: "active",
-  }
-
-  ]);
-  const [selectedInvestment, setSelectedInvestment] = useState(null)
   const [users, setUsers] = useState([]);
   const [activePage, setActivePage] = useState("dashboard");
   const [loading, setLoading] = useState(true);
-  // console.log("Token from store:", useUserStore.getState().token);
-  // 🔥 Fetch Users API
+
   useEffect(() => {
     const fetchUsers = async () => {
       const token = useUserStore.getState().token;
-      // console.log("Token in fetchUsers:", token);
-      if (!token) return;
+      if (!token) {
+        setLoading(false);
+        logout();
+        navigate("/login");
+        return;
+      }
 
       try {
         const resData = await getAllUsers(token);
-        // console.log("Fetched users:", resData);
         if (resData?.status === 200) {
-          // ✅ Save users in state
           const usersArray = resData.data?.users || [];
           setUsers(usersArray);
-          // console.log("Users array:", usersArray);
         } else {
           console.error(
             "Failed to fetch users: ",
             resData?.message || "Unknown error",
           );
         }
-        // setUsers(usersArray);
       } catch (err) {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          logout();
+          navigate("/login");
+          return;
+        }
         console.error("Failed to fetch users:", err);
       } finally {
         setLoading(false);
@@ -61,32 +52,24 @@ export default function AdminDashboard() {
     };
 
     fetchUsers();
-  }, []);
+  }, [logout, navigate]);
 
-  // 🔹 Loading State
   if (loading) {
     return <div className="p-6 text-center">Loading...</div>;
   }
 
-  // 🔹 Render page content based on active tab
   const renderPageContent = () => {
     switch (activePage) {
       case "dashboard":
         return <DashboardOverview users={users} />;
       case "users":
         return <UserManagement users={users} setUsers={setUsers} />;
-         case "deposits":
-      return <DepositRequests />;
-
-    case "networks":
-      return <DepositNetworks />;
+      case "deposits":
+        return <DepositRequests />;
+      case "networks":
+        return <DepositNetworks />;
       case "investments":
-     return (
-    <InvestmentsManagement
-      investments={investments}
-      setSelectedInvestment={setSelectedInvestment}
-    />
-  );
+        return <InvestmentsManagement />;
       case "reports":
       case "settings":
         return (
@@ -102,24 +85,13 @@ export default function AdminDashboard() {
     }
   };
 
-return (
-  <AdminLayout
-    activePage={activePage}
-    setActivePage={setActivePage}
-    navigate={navigate}
-  >
-
-    {renderPageContent()}
-
-    {/* {selectedInvestment && (
-      <InvestmentDetailsModal
-        selectedInvestment={selectedInvestment}
-        setSelectedInvestment={setSelectedInvestment}
-        investments={investments}
-        setInvestments={setInvestments}
-      />
-    )} */}
-
-  </AdminLayout>
-);
+  return (
+    <AdminLayout
+      activePage={activePage}
+      setActivePage={setActivePage}
+      navigate={navigate}
+    >
+      {renderPageContent()}
+    </AdminLayout>
+  );
 }

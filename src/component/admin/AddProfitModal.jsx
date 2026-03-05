@@ -8,6 +8,7 @@ export function AddProfitModal({
   onClose,
   onPercentageChange,
   onConfirm,
+  loading = false,
 }) {
   if (!isOpen || !investment) return null;
 
@@ -125,13 +126,14 @@ export function AddProfitModal({
                 type="button"
                 onClick={onConfirm}
                 disabled={
+                  loading ||
                   !percentageValue ||
                   percentageValue <= 0 ||
                   calculatedProfit > remainingProfit
                 }
                 className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
               >
-                Confirm
+                {loading ? "Saving..." : "Confirm"}
               </button>
             </div>
           </div>

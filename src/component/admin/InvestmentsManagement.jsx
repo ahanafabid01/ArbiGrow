@@ -1,117 +1,214 @@
-import { useState } from 'react';
-import { generateMockInvestments } from '../../constants/mockdata';
-import { InvestmentStatsCards } from './InvestmentStatsCards';
-import { InvestmentFilters } from './InvestmentFilters';
-import { InvestmentsTable } from './InvestmentsTable';
-import { InvestmentPagination } from './InvestmentPagination';
-import { AddProfitModal } from './AddProfitModal';
-import { InvestmentDetailsModal } from './InvestmentDetailsModal';
-// import { InvestmentStatsCards } from './InvestmentStatsCards';
-// import { InvestmentFilters } from './InvestmentFilters';
-// import { InvestmentsTable } from './InvestmentsTable';
-// import { InvestmentPagination } from './InvestmentPagination';
-// import { InvestmentDetailsModal } from './InvestmentDetailsModal';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { InvestmentStatsCards } from "./InvestmentStatsCards";
+import { InvestmentFilters } from "./InvestmentFilters";
+import { InvestmentsTable } from "./InvestmentsTable";
+import { InvestmentPagination } from "./InvestmentPagination";
+import { AddProfitModal } from "./AddProfitModal";
+import { InvestmentDetailsModal } from "./InvestmentDetailsModal";
+import useUserStore from "../../store/userStore.js";
+import { useNavigate } from "react-router-dom";
+import {
+  addAdminInvestmentProfit,
+  getAdminInvestmentDetails,
+  getAdminInvestments,
+} from "../../api/admin.api.js";
 
-// import { generateMockInvestments } from './mockData';
+const toNumber = (value) => Number(value ?? 0);
 
-const ITEMS_PER_PAGE = 10;
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const mapListItem = (item) => ({
+  id: item.investment_id,
+  userName: item.username || "-",
+  userEmail: item.email || "-",
+  packageName: item.package_name,
+  amount: toNumber(item.invested_amount),
+  startDate: formatDate(item.start_date),
+  endDate: formatDate(item.end_date),
+  roi: toNumber(item.roi_percent),
+  expectedProfit: toNumber(item.expected_profit),
+  profitPaid: toNumber(item.profit_earned),
+  status: item.status,
+  percentagePaid: toNumber(item.percentage_paid),
+});
+
+const mapDetails = (response) => ({
+  id: response?.investment?.id,
+  userId: response?.user?.id,
+  userName: response?.user?.username || "-",
+  userEmail: response?.user?.email || "-",
+  packageName: response?.investment?.package_name || "-",
+  amount: toNumber(response?.investment?.invested_amount),
+  startDate: formatDate(response?.investment?.start_date),
+  endDate: formatDate(response?.investment?.end_date),
+  roi: toNumber(response?.investment?.roi_percent),
+  expectedProfit: toNumber(response?.investment?.expected_profit),
+  profitPaid: toNumber(response?.investment?.profit_earned),
+  status: response?.investment?.status || "active",
+  profitHistory: Array.isArray(response?.profit_history)
+    ? response.profit_history.map((history, index) => ({
+        id: `${response?.investment?.id}-${index}`,
+        date: formatDate(history?.date),
+        amount: toNumber(history?.amount),
+      }))
+    : [],
+});
 
 export function InvestmentsManagement() {
-  const [investments, setInvestments] = useState(generateMockInvestments());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [packageFilter, setPackageFilter] = useState('all');
+  const navigate = useNavigate();
+  const token = useUserStore((state) => state.token);
+  const logout = useUserStore((state) => state.logout);
+
+  const [investments, setInvestments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
   const [selectedInvestment, setSelectedInvestment] = useState(null);
   const [showAddProfitModal, setShowAddProfitModal] = useState(false);
-  const [newProfitAmount, setNewProfitAmount] = useState('');
+  const [profitPercentage, setProfitPercentage] = useState("");
+  const [updatingProfit, setUpdatingProfit] = useState(false);
 
-  // Calculate statistics
-  const investmentStats = {
-    total: investments.length,
-    active: investments.filter(i => i.status === 'active').length,
-    completed: investments.filter(i => i.status === 'completed').length,
-    totalInvested: investments.reduce((sum, i) => sum + i.amount, 0),
-    totalProfitPaid: investments.reduce((sum, i) => sum + i.profitPaid, 0),
-  };
+  const fetchInvestments = useCallback(async () => {
+    if (!token) return;
 
-  // Get unique packages
-  const uniquePackages = Array.from(new Set(investments.map(i => i.packageName)));
+    setLoading(true);
+    setError("");
 
-  // Filter investments
-  const filteredInvestments = investments.filter(inv => {
-    const matchesStatus = statusFilter === 'all' || inv.status === statusFilter;
-    const matchesPackage = packageFilter === 'all' || inv.packageName === packageFilter;
+    try {
+      const response = await getAdminInvestments(token, {
+        page: currentPage,
+        statusFilter,
+        search: debouncedSearch,
+      });
 
-    const matchesSearch =
-      inv.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.packageName.toLowerCase().includes(searchQuery.toLowerCase());
+      const items = Array.isArray(response?.items) ? response.items : [];
+      setInvestments(items.map(mapListItem));
+      setTotalItems(Number(response?.total || 0));
+      setTotalPages(Math.max(1, Number(response?.total_pages || 1)));
+      setPageSize(Number(response?.page_size || 50));
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        logout();
+        navigate("/login");
+        return;
+      }
 
-    return matchesStatus && matchesPackage && matchesSearch;
-  });
+      const detail = err?.response?.data?.detail;
+      setError(detail || "Failed to load investments.");
+      setInvestments([]);
+      setTotalItems(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, debouncedSearch, statusFilter, token, logout, navigate]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredInvestments.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentInvestments = filteredInvestments.slice(startIndex, endIndex);
+  const loadInvestmentDetails = useCallback(
+    async (investmentId) => {
+      if (!token || !investmentId) return;
 
-  // Reset to page 1 when filters change
+      try {
+        const response = await getAdminInvestmentDetails(token, investmentId);
+        setSelectedInvestment(mapDetails(response));
+      } catch (err) {
+        const status = err?.response?.status;
+        if (status === 401 || status === 403) {
+          logout();
+          navigate("/login");
+          return;
+        }
+
+        const detail = err?.response?.data?.detail || "Failed to load details.";
+        alert(detail);
+      }
+    },
+    [token, logout, navigate],
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    fetchInvestments();
+  }, [fetchInvestments]);
+
   const handleFilterChange = (filterType, value) => {
     setCurrentPage(1);
 
-    if (filterType === 'status') setStatusFilter(value);
-    if (filterType === 'package') setPackageFilter(value);
-    if (filterType === 'search') setSearchQuery(value);
+    if (filterType === "status") setStatusFilter(value);
+    if (filterType === "search") setSearchQuery(value);
   };
 
-  // Handle add profit
-  const handleAddProfit = () => {
-    if (!selectedInvestment || !newProfitAmount || parseFloat(newProfitAmount) <= 0) return;
+  const handleAddProfit = async () => {
+    if (!selectedInvestment?.id) return;
 
-    const profitAmount = parseFloat(newProfitAmount);
-    const remainingProfit = selectedInvestment.expectedProfit - selectedInvestment.profitPaid;
+    const parsedPercentage = Number(profitPercentage);
+    if (!parsedPercentage || parsedPercentage <= 0) return;
 
-    if (profitAmount > remainingProfit) {
-      alert('Profit amount exceeds remaining profit!');
-      return;
+    setUpdatingProfit(true);
+
+    try {
+      await addAdminInvestmentProfit(token, selectedInvestment.id, parsedPercentage);
+      setShowAddProfitModal(false);
+      setProfitPercentage("");
+
+      await Promise.all([
+        fetchInvestments(),
+        loadInvestmentDetails(selectedInvestment.id),
+      ]);
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401 || status === 403) {
+        logout();
+        navigate("/login");
+        return;
+      }
+
+      const detail = err?.response?.data?.detail || "Failed to add profit.";
+      alert(detail);
+    } finally {
+      setUpdatingProfit(false);
     }
-
-    const newProfit = {
-      id: `p${Date.now()}`,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-      amount: profitAmount,
-    };
-
-    const updatedInvestment = {
-      ...selectedInvestment,
-      profitPaid: selectedInvestment.profitPaid + profitAmount,
-      profitHistory: [...selectedInvestment.profitHistory, newProfit],
-      status:
-        selectedInvestment.profitPaid + profitAmount >= selectedInvestment.expectedProfit
-          ? 'completed'
-          : selectedInvestment.status,
-    };
-
-    setInvestments(
-      investments.map(inv =>
-        inv.id === selectedInvestment.id ? updatedInvestment : inv
-      )
-    );
-
-    setSelectedInvestment(updatedInvestment);
-    setShowAddProfitModal(false);
-    setNewProfitAmount('');
   };
+
+  const investmentStats = useMemo(
+    () => ({
+      total: totalItems,
+      active: investments.filter((i) => i.status === "active").length,
+      completed: investments.filter((i) => i.status === "completed").length,
+      totalInvested: investments.reduce((sum, i) => sum + i.amount, 0),
+      totalProfitPaid: investments.reduce((sum, i) => sum + i.profitPaid, 0),
+    }),
+    [investments, totalItems],
+  );
+
+  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize;
+  const endIndex = startIndex + investments.length;
 
   return (
     <div className="p-4 md:p-6">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold mb-1">
           <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
@@ -123,38 +220,43 @@ export function InvestmentsManagement() {
         </p>
       </div>
 
-      {/* Summary Statistics */}
       <InvestmentStatsCards stats={investmentStats} />
 
-      {/* Filters and Search */}
       <InvestmentFilters
         searchQuery={searchQuery}
         statusFilter={statusFilter}
-        packageFilter={packageFilter}
-        uniquePackages={uniquePackages}
-        onSearchChange={(value) => handleFilterChange('search', value)}
-        onStatusChange={(value) => handleFilterChange('status', value)}
-        onPackageChange={(value) => handleFilterChange('package', value)}
+        onSearchChange={(value) => handleFilterChange("search", value)}
+        onStatusChange={(value) => handleFilterChange("status", value)}
       />
 
-      {/* Investments Table */}
-      <div>
-        <InvestmentsTable
-          investments={currentInvestments}
-          onViewDetails={setSelectedInvestment}
-        />
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+          {error}
+        </div>
+      )}
 
-        <InvestmentPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          totalItems={filteredInvestments.length}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+      {loading ? (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-300">
+          Loading investments...
+        </div>
+      ) : (
+        <div>
+          <InvestmentsTable
+            investments={investments}
+            onViewDetails={(investment) => loadInvestmentDetails(investment.id)}
+          />
 
-      {/* Investment Details Modal */}
+          <InvestmentPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            totalItems={totalItems}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
+
       {selectedInvestment && (
         <InvestmentDetailsModal
           investment={selectedInvestment}
@@ -163,17 +265,17 @@ export function InvestmentsManagement() {
         />
       )}
 
-      {/* Add Profit Modal */}
       <AddProfitModal
         isOpen={showAddProfitModal}
         investment={selectedInvestment}
-        profitAmount={newProfitAmount}
+        profitPercentage={profitPercentage}
         onClose={() => {
           setShowAddProfitModal(false);
-          setNewProfitAmount('');
+          setProfitPercentage("");
         }}
-        onAmountChange={setNewProfitAmount}
+        onPercentageChange={setProfitPercentage}
         onConfirm={handleAddProfit}
+        loading={updatingProfit}
       />
     </div>
   );

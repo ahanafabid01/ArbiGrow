@@ -1,7 +1,53 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Clock, BarChart3, TrendingUp as TrendingUpIcon } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { getMyInvestmentDetails } from "../../api/user.api.js";
 
 export function InvestmentDetailsModal({ investment, onClose }) {
+  const [profitHistory, setProfitHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!investment?.id) {
+        setProfitHistory([]);
+        return;
+      }
+
+      setHistoryLoading(true);
+
+      try {
+        const response = await getMyInvestmentDetails(investment.id);
+        const history = Array.isArray(response?.data?.profit_history)
+          ? response.data.profit_history
+          : [];
+
+        setProfitHistory(
+          history.map((item, index) => ({
+            id: `${investment.id}-${index}`,
+            date: item?.date
+              ? new Date(item.date).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "-",
+            amount: Number(item?.amount ?? 0),
+            type: item?.percentage
+              ? `ROI +${Number(item.percentage).toFixed(2)}%`
+              : "Daily Profit",
+          })),
+        );
+      } catch {
+        setProfitHistory([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [investment?.id]);
+
   if (!investment) return null;
 
   const getInvestmentProgress = (inv) => {
@@ -144,6 +190,13 @@ export function InvestmentDetailsModal({ investment, onClose }) {
                     {investment.dailyProfit.toFixed(2)} USDT
                   </span>
                 </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Total ROI Cap</span>
+                  <span className="text-cyan-400 font-semibold">
+                    {Number(investment.roiPercent ?? 0).toFixed(2)}%
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -157,9 +210,14 @@ export function InvestmentDetailsModal({ investment, onClose }) {
               </div>
 
               <div className="divide-y divide-white/5">
-                {investment.profitHistory.map((profit, index) => (
+                {historyLoading ? (
+                  <div className="p-4 text-sm text-gray-400">Loading profit history...</div>
+                ) : profitHistory.length === 0 ? (
+                  <div className="p-4 text-sm text-gray-400">No profit history yet.</div>
+                ) : (
+                  profitHistory.map((profit, index) => (
                   <motion.div
-                    key={index}
+                    key={profit.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
@@ -187,7 +245,8 @@ export function InvestmentDetailsModal({ investment, onClose }) {
                       <div className="text-xs text-gray-500">USDT</div>
                     </div>
                   </motion.div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
