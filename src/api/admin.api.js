@@ -27,7 +27,10 @@ export const getAllUsers = async (
     params.append("status", status);
   }
 
-  const res = await api.get(`v1/admin/users?${params.toString()}`, authHeaders(token));
+  const res = await api.get(
+    `v1/admin/users?${params.toString()}`,
+    authHeaders(token),
+  );
 
   return res || [];
 };
@@ -51,12 +54,16 @@ export const updateKYCStatus = async (token, user_Id, statusValue) => {
 };
 
 export const getDepositNetworks = async (token) => {
-  const res = await api.get("v1/deposit-networks", authHeaders(token));
+  const res = await api.get("v1/deposit-networks/", authHeaders(token));
   return res.data || {};
 };
 
 export const createDepositNetwork = async (token, payload) => {
-  const res = await api.post("v1/deposit-networks/", payload, authHeaders(token));
+  const res = await api.post(
+    "v1/deposit-networks/",
+    payload,
+    authHeaders(token),
+  );
   return res.data || {};
 };
 
@@ -70,7 +77,10 @@ export const updateDepositNetwork = async (token, networkId, payload) => {
 };
 
 export const deleteDepositNetwork = async (token, networkId) => {
-  const res = await api.delete(`v1/deposit-networks/${networkId}`, authHeaders(token));
+  const res = await api.delete(
+    `v1/deposit-networks/${networkId}`,
+    authHeaders(token),
+  );
   return res.data || {};
 };
 
@@ -86,7 +96,10 @@ export const getAdminDeposits = async (
     params.append("status", status.trim());
   }
 
-  const res = await api.get(`v1/deposits/admin?${params.toString()}`, authHeaders(token));
+  const res = await api.get(
+    `v1/deposits/admin?${params.toString()}`,
+    authHeaders(token),
+  );
   return res.data || {};
 };
 
