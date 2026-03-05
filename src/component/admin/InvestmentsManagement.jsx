@@ -40,6 +40,7 @@ const mapListItem = (item) => ({
   profitPaid: toNumber(item.profit_earned),
   status: item.status,
   percentagePaid: toNumber(item.percentage_paid),
+  remainingPercentage: toNumber(item.remaining_percentage),
 });
 
 const mapDetails = (response) => ({
@@ -54,6 +55,8 @@ const mapDetails = (response) => ({
   roi: toNumber(response?.investment?.roi_percent),
   expectedProfit: toNumber(response?.investment?.expected_profit),
   profitPaid: toNumber(response?.investment?.profit_earned),
+  percentagePaid: toNumber(response?.investment?.percentage_paid),
+  remainingPercentage: toNumber(response?.investment?.remaining_percentage),
   status: response?.investment?.status || "active",
   profitHistory: Array.isArray(response?.profit_history)
     ? response.profit_history.map((history, index) => ({
@@ -165,7 +168,13 @@ export function InvestmentsManagement() {
     if (!selectedInvestment?.id) return;
 
     const parsedPercentage = Number(profitPercentage);
+    const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
+
     if (!parsedPercentage || parsedPercentage <= 0) return;
+    if (parsedPercentage > remainingPercentage) {
+      alert(`Only ${remainingPercentage.toFixed(2)}% ROI remaining.`);
+      return;
+    }
 
     setUpdatingProfit(true);
 
@@ -206,6 +215,24 @@ export function InvestmentsManagement() {
 
   const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize;
   const endIndex = startIndex + investments.length;
+
+  const handleProfitPercentageChange = (value) => {
+    if (value === "") {
+      setProfitPercentage("");
+      return;
+    }
+
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue) || numericValue < 0) return;
+
+    const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
+    const cappedValue = Math.min(
+      numericValue,
+      Math.max(0, remainingPercentage),
+    );
+
+    setProfitPercentage(String(cappedValue));
+  };
 
   return (
     <div className="p-4 md:p-6">
@@ -273,7 +300,7 @@ export function InvestmentsManagement() {
           setShowAddProfitModal(false);
           setProfitPercentage("");
         }}
-        onPercentageChange={setProfitPercentage}
+        onPercentageChange={handleProfitPercentageChange}
         onConfirm={handleAddProfit}
         loading={updatingProfit}
       />

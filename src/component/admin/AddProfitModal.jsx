@@ -12,21 +12,41 @@ export function AddProfitModal({
 }) {
   if (!isOpen || !investment) return null;
 
-  // Calculate profit amount based on percentage
-  const percentageValue = parseFloat(profitPercentage) || 0;
-  const calculatedProfit = (investment.amount * percentageValue) / 100;
-  const remainingProfit = investment.expectedProfit - investment.profitPaid;
+  const toNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const amount = toNumber(investment.amount);
+  const expectedProfit = toNumber(investment.expectedProfit);
+  const profitPaid = toNumber(investment.profitPaid);
+  const roi = toNumber(investment.roi);
+  const percentagePaid = toNumber(investment.percentagePaid);
+  const percentageValue = Math.max(0, toNumber(profitPercentage));
+  const calculatedProfit = (amount * percentageValue) / 100;
+  const remainingProfit = Math.max(0, expectedProfit - profitPaid);
+
+  const hasRemainingPercentage = Number.isFinite(
+    Number(investment.remainingPercentage),
+  );
+  const remainingPercentage = Math.max(
+    0,
+    hasRemainingPercentage
+      ? toNumber(investment.remainingPercentage)
+      : roi - percentagePaid,
+  );
+  const MotionDiv = motion.div;
 
   return (
     <AnimatePresence>
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <motion.div
+        <MotionDiv
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -55,7 +75,7 @@ export function AddProfitModal({
                   Investment Amount:
                 </span>
                 <span className="text-white font-bold">
-                  ${investment.amount.toLocaleString()} USDT
+                  ${amount.toLocaleString()} USDT
                 </span>
               </div>
 
@@ -71,7 +91,16 @@ export function AddProfitModal({
               <div className="flex justify-between">
                 <span className="text-sm text-gray-400">Already Paid:</span>
                 <span className="text-blue-400 font-semibold">
-                  ${investment.profitPaid.toLocaleString()} USDT
+                  ${profitPaid.toLocaleString()} USDT
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-400">
+                  Remaining Percentage:
+                </span>
+                <span className="text-cyan-400 font-semibold">
+                  {remainingPercentage.toFixed(2)}%
                 </span>
               </div>
             </div>
@@ -84,13 +113,29 @@ export function AddProfitModal({
               <input
                 type="number"
                 value={profitPercentage}
-                onChange={(e) => onPercentageChange(e.target.value)}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  if (nextValue === "") {
+                    onPercentageChange("");
+                    return;
+                  }
+
+                  const parsedValue = Number(nextValue);
+                  if (Number.isNaN(parsedValue)) return;
+
+                  const cappedValue = Math.min(parsedValue, remainingPercentage);
+                  onPercentageChange(String(cappedValue));
+                }}
                 placeholder="Enter percentage..."
                 min="0"
-                max="100"
+                max={remainingPercentage}
                 step="0.01"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500/50 focus:outline-none transition-colors text-white placeholder-gray-500"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Max allowed: {remainingPercentage.toFixed(2)}%
+              </p>
             </div>
 
             {/* Calculated Amount Display */}
@@ -107,7 +152,13 @@ export function AddProfitModal({
 
                 {calculatedProfit > remainingProfit && (
                   <p className="text-red-400 text-xs mt-2">
-                    ⚠️ Amount exceeds remaining profit
+                    Warning: amount exceeds remaining profit
+                  </p>
+                )}
+
+                {percentageValue > remainingPercentage && (
+                  <p className="text-red-400 text-xs mt-2">
+                    Warning: percentage exceeds remaining percentage
                   </p>
                 )}
               </div>
@@ -129,6 +180,7 @@ export function AddProfitModal({
                   loading ||
                   !percentageValue ||
                   percentageValue <= 0 ||
+                  percentageValue > remainingPercentage ||
                   calculatedProfit > remainingProfit
                 }
                 className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
@@ -137,8 +189,8 @@ export function AddProfitModal({
               </button>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </MotionDiv>
+      </MotionDiv>
     </AnimatePresence>
   );
 }
