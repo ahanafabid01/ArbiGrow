@@ -92,7 +92,9 @@ export function UserDashboard() {
       try {
         const res = await getReferralNetwork();
         const payload = res?.data || {};
-        const levelsFromApi = Array.isArray(payload.levels) ? payload.levels : [];
+        const levelsFromApi = Array.isArray(payload.levels)
+          ? payload.levels
+          : [];
 
         const mappedByLevel = levelsFromApi.reduce((acc, levelRow) => {
           const levelNo = Number(levelRow.level);
@@ -117,7 +119,8 @@ export function UserDashboard() {
         }, {});
 
         const normalizedLevels = [1, 2, 3, 4, 5].map(
-          (levelNo) => mappedByLevel[levelNo] || EMPTY_REFERRAL_LEVELS[levelNo - 1],
+          (levelNo) =>
+            mappedByLevel[levelNo] || EMPTY_REFERRAL_LEVELS[levelNo - 1],
         );
 
         setReferralLevels(normalizedLevels);
@@ -156,21 +159,18 @@ export function UserDashboard() {
       label: "Deposit",
       icon: Download,
       description: "Add funds",
-      
     },
     {
       id: "packages",
       label: "Packages",
       icon: Package,
       description: "Investment plans",
-      
     },
     {
       id: "investments",
       label: "My Investments",
       icon: TrendingUp,
       description: "Active investments",
-      
     },
     {
       id: "withdraw",
@@ -183,7 +183,7 @@ export function UserDashboard() {
       label: "Transactions",
       icon: FileText,
       description: "Transaction history",
-      comingSoon:true ,
+      comingSoon: true,
     },
     {
       id: "referral",
@@ -192,11 +192,12 @@ export function UserDashboard() {
       description: "Invite & earn",
     },
     {
-  id: "market",
-  label: "Market",
-  icon: TrendingUp,
-  description: "Crypto market overview",
- },
+      id: "market",
+      label: "Market",
+      icon: TrendingUp,
+      description: "Crypto market overview",
+      comingSoon: true,
+    },
     {
       id: "profile",
       label: "Profile",
@@ -242,10 +243,9 @@ export function UserDashboard() {
   };
 
   // ── Referral helpers ──────────────────────────────────────────
-  const totalReferrals = referralTotals.totalReferrals || referralLevels.reduce(
-    (s, l) => s + l.users.length,
-    0,
-  );
+  const totalReferrals =
+    referralTotals.totalReferrals ||
+    referralLevels.reduce((s, l) => s + l.users.length, 0);
   const totalActiveReferrals = referralTotals.totalActiveReferrals;
 
   const levelColors = {
@@ -284,9 +284,9 @@ export function UserDashboard() {
   const renderPageContent = () => {
     // Referral Page
     if (activePage === "referral") {
-      const activeLevel = referralLevels.find(
-        (l) => l.level === selectedReferralLevel,
-      ) || EMPTY_REFERRAL_LEVELS[0];
+      const activeLevel =
+        referralLevels.find((l) => l.level === selectedReferralLevel) ||
+        EMPTY_REFERRAL_LEVELS[0];
       const lc = levelColors[selectedReferralLevel];
 
       return (
@@ -324,13 +324,13 @@ export function UserDashboard() {
         />
       );
     }
-            if (activePage === "deposit") {
-          return <DepositPage />;
-         }
+    if (activePage === "deposit") {
+      return <DepositPage />;
+    }
     if (activePage === "withdraw") {
       return <WithdrawPage />;
     }
-         //investment
+    //investment
     if (activePage === "investments") {
       return (
         <MyInvestments
@@ -339,7 +339,7 @@ export function UserDashboard() {
         />
       );
     }
-         //packege moddal
+    //packege moddal
     if (activePage === "packages") {
       return (
         <>
@@ -355,13 +355,12 @@ export function UserDashboard() {
           />
         </>
       );
-       
     }
-    // market page 
-     if (activePage === "market") {
-    return <Market />;
-     }
-  
+    // market page
+    if (activePage === "market") {
+      return <Market />;
+    }
+
     if (activePage !== "overview") {
       return (
         <div className="min-h-screen flex items-center justify-center p-6">
@@ -375,7 +374,7 @@ export function UserDashboard() {
         </div>
       );
     }
-     
+
     if (activePage === "overview") {
       return (
         <OverviewPage
@@ -396,9 +395,8 @@ export function UserDashboard() {
         />
       );
     }
- 
   };
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0e27] via-[#0d1137] to-[#0a0e27] text-white">
       {/* Background Elements */}
