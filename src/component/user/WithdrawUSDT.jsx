@@ -72,17 +72,18 @@ export default function WithdrawPage() {
         key: "arbx_wallet",
         label: "ARBX Wallet",
         balance: toNumber(user?.arbx_wallet),
+        disabled: true
       },
-      {
-        key: "deposit_wallet",
-        label: "Deposit Wallet",
-        balance: toNumber(user?.deposit_wallet),
-      },
-      {
-        key: "withdraw_wallet",
-        label: "Withdraw Wallet",
-        balance: toNumber(user?.withdraw_wallet),
-      },
+      // {
+      //   key: "deposit_wallet",
+      //   label: "Deposit Wallet",
+      //   balance: toNumber(user?.deposit_wallet),
+      // },
+      // {
+      //   key: "withdraw_wallet",
+      //   label: "Withdraw Wallet",
+      //   balance: toNumber(user?.withdraw_wallet),
+      // },
       {
         key: "referral_wallet",
         label: "Referral Wallet",
@@ -271,9 +272,10 @@ export default function WithdrawPage() {
               <option
                 key={wallet.key}
                 value={wallet.key}
+                disabled={wallet.disabled}
                 style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
               >
-                {wallet.label} ({wallet.balance.toFixed(7)})
+                {wallet.label} ({wallet.balance.toFixed(7)} {wallet.disabled ? "(Coming Soon" : ""})
               </option>
             ))}
           </select>

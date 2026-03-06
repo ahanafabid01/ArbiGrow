@@ -19,12 +19,8 @@ import {
   claimMining,
 } from "../../api/user.api.js";
 
-const OverviewPage = ({
-  mockUserData,
-  mockMarketPrices,
-  arbxCardImg,
-  arbxCoinImg,
-}) => {
+const OverviewPage = (
+) => {
   const MINING_CYCLE_MS = 24 * 60 * 60 * 1000;
   const { user, setUser, logout } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);

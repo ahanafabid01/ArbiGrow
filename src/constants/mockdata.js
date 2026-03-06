@@ -617,3 +617,91 @@ export const mockInvestments = [
     ]
   }
 ];
+
+
+
+// Mock cryptocurrency data
+
+
+export const popularCurrencies = [
+  {
+    id: 'btc',
+    symbol: 'BTC',
+    name: 'Bitcoin',
+    price: 68032.1,
+    change24h: 4.21,
+    icon: '₿'
+  },
+  {
+    id: 'eth',
+    symbol: 'ETH',
+    name: 'Ethereum',
+    price: 3427.16,
+    change24h: 4.95,
+    icon: 'Ξ'
+  },
+  {
+    id: 'sol',
+    symbol: 'SOL',
+    name: 'Solana',
+    price: 145.77,
+    change24h: 4.25,
+    icon: 'S'
+  },
+  {
+    id: 'xrp',
+    symbol: 'XRP',
+    name: 'Ripple',
+    price: 2.1498,
+    change24h: 5.21,
+    icon: 'X'
+  },
+  {
+    id: 'bts',
+    symbol: 'BTS',
+    name: 'BitShares',
+    price: 0.012,
+    change24h: -2.27,
+    icon: 'B'
+  },
+  {
+    id: 'trx',
+    symbol: 'TRX',
+    name: 'Tron',
+    price: 0.26078,
+    change24h: -0.74,
+    icon: 'T'
+  },
+  {
+    id: 'usdt',
+    symbol: 'USDT',
+    name: 'Tether',
+    price: 1.0000272,
+    change24h: -0.06,
+    icon: '$'
+  },
+  {
+    id: 'doge',
+    symbol: 'DOGE',
+    name: 'Dogecoin',
+    price: 0.38606,
+    change24h: 1.24,
+    icon: 'Ð'
+  },
+  {
+    id: 'ada',
+    symbol: 'ADA',
+    name: 'Cardano',
+    price: 1.09841,
+    change24h: 3.22,
+    icon: 'A'
+  },
+  {
+    id: 'matic',
+    symbol: 'MATIC',
+    name: 'Polygon',
+    price: 0.5146,
+    change24h: 3.90,
+    icon: 'M'
+  }
+];

@@ -49,6 +49,7 @@ import WithdrawPage from "../component/user/WithdrawUSDT.jsx";
 import TierSection from "../component/package/TierSection.jsx";
 import PackageModal from "../component/package/PackageModal.jsx";
 import { MyInvestments } from "../component/user/MyInvestments.jsx";
+import { Market } from "../component/user/Market.jsx";
 // Mock data for market prices
 
 const EMPTY_REFERRAL_LEVELS = [
@@ -190,6 +191,12 @@ export function UserDashboard() {
       icon: Users,
       description: "Invite & earn",
     },
+    {
+  id: "market",
+  label: "Market",
+  icon: TrendingUp,
+  description: "Crypto market overview",
+ },
     {
       id: "profile",
       label: "Profile",
@@ -348,8 +355,12 @@ export function UserDashboard() {
           />
         </>
       );
-      // investment
+       
     }
+    // market page 
+     if (activePage === "market") {
+    return <Market />;
+     }
   
     if (activePage !== "overview") {
       return (
