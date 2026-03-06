@@ -8,6 +8,7 @@ import {
 } from "../../api/user.api.js";
 
 const MIN_WITHDRAW_AMOUNT = 10;
+const MAIN_WALLET_BUFFER_RATE = 0.01;
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -106,6 +107,24 @@ export default function WithdrawPage() {
     [walletOptions],
   );
 
+  const amountNumber = useMemo(() => {
+    const parsedAmount = Number(amount.trim());
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) return 0;
+    return parsedAmount;
+  }, [amount]);
+
+  const mainWalletBalance = toNumber(user?.main_wallet);
+  const requiredMainWalletBalance = useMemo(
+    () => amountNumber * (1 + MAIN_WALLET_BUFFER_RATE),
+    [amountNumber],
+  );
+  const mainWalletShortfall = useMemo(
+    () => Math.max(requiredMainWalletBalance - mainWalletBalance, 0),
+    [requiredMainWalletBalance, mainWalletBalance],
+  );
+  const hasEnoughMainWalletBalance =
+    amountNumber <= 0 || mainWalletShortfall === 0;
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -143,8 +162,6 @@ export default function WithdrawPage() {
       return;
     }
 
-    const amountNumber = Number(amount.trim());
-
     if (Number.isNaN(amountNumber) || amountNumber <= 0) {
       setErrorMessage("Please enter a valid amount.");
       return;
@@ -160,6 +177,13 @@ export default function WithdrawPage() {
     if (amountNumber > selectedWallet.balance) {
       setErrorMessage(
         `Insufficient balance in ${selectedWallet.label}. Available: ${selectedWallet.balance.toFixed(7)}.`,
+      );
+      return;
+    }
+
+    if (!hasEnoughMainWalletBalance) {
+      setErrorMessage(
+        `Insufficient Main Wallet balance. Required: ${requiredMainWalletBalance.toFixed(7)} USDT (Amount + 1%), Available: ${mainWalletBalance.toFixed(7)} USDT.`,
       );
       return;
     }
@@ -291,6 +315,25 @@ export default function WithdrawPage() {
             placeholder={`Amount (min ${MIN_WITHDRAW_AMOUNT} USDT)`}
           />
 
+          {amountNumber > 0 && (
+            <div
+              className={`rounded-xl border px-4 py-3 text-sm ${
+                hasEnoughMainWalletBalance
+                  ? "border-green-500/30 bg-green-500/10 text-green-200"
+                  : "border-red-500/30 bg-red-500/10 text-red-200"
+              }`}
+            >
+              <p>
+                Required Main Wallet (Amount + 1%):{" "}
+                {requiredMainWalletBalance.toFixed(7)} USDT
+              </p>
+              <p>Main Wallet Available: {mainWalletBalance.toFixed(7)} USDT</p>
+              {!hasEnoughMainWalletBalance && (
+                <p>Need extra: {mainWalletShortfall.toFixed(7)} USDT</p>
+              )}
+            </div>
+          )}
+
           <input
             value={destinationAddress}
             onChange={(event) => setDestinationAddress(event.target.value)}
@@ -307,7 +350,7 @@ export default function WithdrawPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !hasEnoughMainWalletBalance}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Send size={18} />
