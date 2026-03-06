@@ -5,18 +5,15 @@ import {
   ChevronRight,
   LayoutDashboard,
   Users,
-  Settings,
-  TrendingUp,
-  FileText,
   X,
   Menu,
   LogOut,
-   Wallet,      // ✅ add
+  Wallet,
+  Upload,
   Network,
   Package,
 } from "lucide-react";
 import logo from "../../assets/Arbigrow-Logo.png";
-import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/userStore";
 
 export default function AdminLayout({
@@ -29,51 +26,44 @@ export default function AdminLayout({
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const adminPages = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    description: "Overview & Analytics",
-  },
-  {
-    id: "users",
-    label: "User Management",
-    icon: Users,
-    description: "Manage all users",
-  },
-  {
-    id: "deposits",
-    label: "Deposit Requests",
-    icon: Wallet,
-    description: "Manage deposits",
-  },
-  {
-    id: "networks",
-    label: "Deposit Networks",
-    icon: Network,
-    description: "Manage networks",
-  },
-  // {
-  //   id: "reports",
-  //   label: "Reports",
-  //   icon: TrendingUp,
-  //   description: "Coming Soon",
-  //   disabled: true,
-  // },
-   {
-  id: "investments",
-  label: "Investments",
-  icon: Package,
-  description: "Manage Investments",
-},
-  // {
-  //   id: "settings",
-  //   label: "Settings",
-  //   icon: Settings,
-  //   description: "Coming Soon",
-  //   disabled: true,
-  // },
-];
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      description: "Overview & Analytics",
+    },
+    {
+      id: "users",
+      label: "User Management",
+      icon: Users,
+      description: "Manage all users",
+    },
+    {
+      id: "deposits",
+      label: "Deposit Requests",
+      icon: Wallet,
+      description: "Manage deposits",
+    },
+    {
+      id: "withdrawals",
+      label: "Withdrawal Requests",
+      icon: Upload,
+      description: "Manage withdrawals",
+    },
+    {
+      id: "networks",
+      label: "Deposit Networks",
+      icon: Network,
+      description: "Manage networks",
+    },
+    {
+      id: "investments",
+      label: "Investments",
+      icon: Package,
+      description: "Manage investments",
+    },
+  ];
+
   const logout = useUserStore((state) => state.logout);
 
   const handleLogout = () => {
@@ -83,14 +73,12 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0e27] via-[#0d1137] to-[#0a0e27] text-white">
-      {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
         <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
         <div className="absolute top-1/3 right-10 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         className="lg:hidden fixed top-6 left-6 z-[60] p-3 rounded-xl bg-gradient-to-br from-white/10 to-white/[0.02] backdrop-blur-2xl border border-white/10 hover:border-cyan-500/30 transition-all"
@@ -102,7 +90,6 @@ export default function AdminLayout({
         )}
       </button>
 
-      {/* Mobile Backdrop */}
       <AnimatePresence>
         {mobileSidebarOpen && (
           <motion.div
@@ -115,7 +102,6 @@ export default function AdminLayout({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         initial={false}
         animate={{
@@ -127,7 +113,6 @@ export default function AdminLayout({
         }`}
       >
         <div className="h-full flex flex-col">
-          {/* Logo */}
           <div className="p-6 border-b border-white/10">
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -152,24 +137,18 @@ export default function AdminLayout({
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {adminPages.map((page) => (
               <button
                 key={page.id}
                 onClick={() => {
-                  if (!page.disabled) {
-                    setActivePage(page.id);
-                    setMobileSidebarOpen(false);
-                  }
+                  setActivePage(page.id);
+                  setMobileSidebarOpen(false);
                 }}
-                disabled={page.disabled}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activePage === page.id
                     ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
-                    : page.disabled
-                      ? "text-gray-600 cursor-not-allowed opacity-50"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <page.icon className="w-5 h-5 flex-shrink-0" />
@@ -191,14 +170,10 @@ export default function AdminLayout({
             ))}
           </nav>
 
-          {/* Collapse Button */}
           <div className="p-4 border-t border-white/10 space-y-3">
-            {/* 🔥 Logout Button */}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl 
-    bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 
-    text-red-400 hover:text-red-300 transition-all duration-300"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 transition-all duration-300"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               {!sidebarCollapsed && (
@@ -206,7 +181,6 @@ export default function AdminLayout({
               )}
             </button>
 
-            {/* Collapse Button */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="hidden lg:flex w-full items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 text-gray-400 hover:text-white"
@@ -224,7 +198,6 @@ export default function AdminLayout({
         </div>
       </motion.aside>
 
-      {/* Main Content */}
       <div
         className="relative z-10 transition-all duration-300 pt-20"
         style={{

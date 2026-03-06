@@ -35,6 +35,9 @@ export function AddProfitModal({
       ? toNumber(investment.remainingPercentage)
       : roi - percentagePaid,
   );
+  const maxAllowedPercentage = Math.min(5, remainingPercentage);
+  const minAllowedPercentage =
+    remainingPercentage >= 1 ? 1 : Math.min(remainingPercentage, 0.01);
   const MotionDiv = motion.div;
 
   return (
@@ -123,18 +126,18 @@ export function AddProfitModal({
                   const parsedValue = Number(nextValue);
                   if (Number.isNaN(parsedValue)) return;
 
-                  const cappedValue = Math.min(parsedValue, remainingPercentage);
+                  const cappedValue = Math.min(parsedValue, maxAllowedPercentage);
                   onPercentageChange(String(cappedValue));
                 }}
                 placeholder="Enter percentage..."
-                min="0"
-                max={remainingPercentage}
-                step="0.01"
+                min={minAllowedPercentage}
+                max={maxAllowedPercentage}
+                step="0.0001"
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-500/50 focus:outline-none transition-colors text-white placeholder-gray-500"
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Max allowed: {remainingPercentage.toFixed(2)}%
+                Allowed per entry: {minAllowedPercentage.toFixed(2)}% - {maxAllowedPercentage.toFixed(2)}%
               </p>
             </div>
 
@@ -161,6 +164,12 @@ export function AddProfitModal({
                     Warning: percentage exceeds remaining percentage
                   </p>
                 )}
+
+                {percentageValue > 5 && (
+                  <p className="text-red-400 text-xs mt-2">
+                    Warning: percentage cannot exceed 5%
+                  </p>
+                )}
               </div>
             )}
 
@@ -179,7 +188,8 @@ export function AddProfitModal({
                 disabled={
                   loading ||
                   !percentageValue ||
-                  percentageValue <= 0 ||
+                  percentageValue < minAllowedPercentage ||
+                  percentageValue > 5 ||
                   percentageValue > remainingPercentage ||
                   calculatedProfit > remainingProfit
                 }

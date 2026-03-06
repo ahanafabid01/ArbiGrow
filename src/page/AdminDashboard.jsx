@@ -6,6 +6,7 @@ import DashboardOverview from "../component/admin/DashboardOverview.jsx";
 import { getAllUsers } from "../api/admin.api.js";
 import useUserStore from "../store/userStore.js";
 import DepositRequests from "../component/admin/DepositRequests.jsx";
+import WithdrawalRequests from "../component/admin/WithdrawalRequests.jsx";
 import DepositNetworks from "../component/admin/DepositNetworks.jsx";
 import { InvestmentsManagement } from "../component/admin/InvestmentsManagement.jsx";
 
@@ -66,6 +67,8 @@ export default function AdminDashboard() {
         return <UserManagement users={users} setUsers={setUsers} />;
       case "deposits":
         return <DepositRequests />;
+      case "withdrawals":
+        return <WithdrawalRequests />;
       case "networks":
         return <DepositNetworks />;
       case "investments":

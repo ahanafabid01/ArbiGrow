@@ -19,38 +19,21 @@ const formatDate = (value) => {
   });
 };
 
-const getDurationDays = (startDate, endDate) => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 1;
-
-  const diffDays = Math.ceil((end.getTime() - start.getTime()) / 86400000);
-  return Math.max(1, diffDays);
-};
-
-const getDaysElapsed = (startDate, durationDays) => {
-  const start = new Date(startDate);
-  if (Number.isNaN(start.getTime())) return 0;
-
-  const elapsed = Math.floor((Date.now() - start.getTime()) / 86400000);
-  return Math.min(durationDays, Math.max(0, elapsed));
-};
-
 const mapInvestment = (investment) => {
   const investedAmount = toNumber(investment.invested_amount);
   const expectedProfit = toNumber(investment.expected_profit);
   const profitEarned = toNumber(investment.profit_earned);
-  const durationDays =
-    toNumber(investment.duration_days) ||
-    getDurationDays(investment.start_date, investment.end_date);
-  const daysElapsed = Math.min(
-    durationDays,
-    toNumber(investment.days_elapsed) ||
-      getDaysElapsed(investment.start_date, durationDays),
+  const roiPercent = toNumber(investment.roi_percent);
+  const profitPercentagePaid = toNumber(investment.profit_percentage_paid);
+  const remainingPercentage = Math.max(
+    0,
+    toNumber(investment.remaining_percentage) || roiPercent - profitPercentagePaid,
   );
-  const dailyProfit =
-    toNumber(investment.daily_profit) || expectedProfit / durationDays;
+  const progressPercentage = Math.min(
+    100,
+    toNumber(investment.progress_percentage) ||
+      (roiPercent > 0 ? (profitPercentagePaid / roiPercent) * 100 : 0),
+  );
 
   return {
     id: investment.id,
@@ -60,11 +43,10 @@ const mapInvestment = (investment) => {
     expectedProfit,
     profitEarned,
     startDate: formatDate(investment.start_date),
-    endDate: formatDate(investment.end_date),
-    durationDays,
-    daysElapsed,
-    dailyProfit,
-    roiPercent: toNumber(investment.roi_percent),
+    roiPercent,
+    profitPercentagePaid,
+    remainingPercentage,
+    progressPercentage,
     profitHistory: [],
   };
 };

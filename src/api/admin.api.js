@@ -99,6 +99,34 @@ export const updateDepositStatus = async (token, depositId, status) => {
   return res.data || {};
 };
 
+export const getAdminWithdrawals = async (
+  token,
+  { page = 1, limit = 50, status = "" } = {},
+) => {
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("limit", limit);
+
+  if (status && status.trim() !== "") {
+    params.append("status", status.trim());
+  }
+
+  const res = await api.get(
+    `v1/withdrawals/admin?${params.toString()}`,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const updateWithdrawalStatus = async (token, withdrawalId, status) => {
+  const res = await api.patch(
+    `v1/withdrawals/${withdrawalId}`,
+    { status },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
 export const getAdminInvestments = async (
   token,
   { page = 1, statusFilter = "", search = "" } = {},

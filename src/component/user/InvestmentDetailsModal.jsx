@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, Clock, BarChart3, TrendingUp as TrendingUpIcon } from 'lucide-react';
+import { X, Calendar, BarChart3, TrendingUp as TrendingUpIcon } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { getMyInvestmentDetails } from "../../api/user.api.js";
 
@@ -51,7 +51,7 @@ export function InvestmentDetailsModal({ investment, onClose }) {
   if (!investment) return null;
 
   const getInvestmentProgress = (inv) => {
-    return (inv.daysElapsed / inv.durationDays) * 100;
+    return inv.progressPercentage;
   };
 
   const getInvestmentStatusColor = (status) => {
@@ -134,10 +134,10 @@ export function InvestmentDetailsModal({ investment, onClose }) {
               </div>
             </div>
 
-            {/* Duration Progress */}
+            {/* ROI Progress */}
             <div className="rounded-xl bg-white/5 border border-white/10 p-5">
               <h3 className="text-lg font-bold text-white mb-4">
-                Duration Progress
+                ROI Progress
               </h3>
 
               <div className="space-y-4">
@@ -166,28 +166,18 @@ export function InvestmentDetailsModal({ investment, onClose }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <div>
-                      <div className="text-xs text-gray-500">End Date</div>
-                      <div className="text-sm text-white font-medium">
-                        {investment.endDate}
-                      </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500">Remaining ROI</div>
+                    <div className="text-sm text-white font-medium">
+                      {investment.remainingPercentage.toFixed(2)}%
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-between pt-2 border-t border-white/10 text-sm">
-                  <span className="text-gray-400">Days Elapsed</span>
+                  <span className="text-gray-400">ROI Paid</span>
                   <span className="text-white font-semibold">
-                    {investment.daysElapsed} / {investment.durationDays} days
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Daily Profit</span>
-                  <span className="text-green-400 font-semibold">
-                    {investment.dailyProfit.toFixed(2)} USDT
+                    {investment.profitPercentagePaid.toFixed(2)}%
                   </span>
                 </div>
 

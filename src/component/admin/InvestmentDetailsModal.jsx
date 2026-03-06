@@ -86,11 +86,6 @@ export function InvestmentDetailsModal({ investment, onClose, onAddProfit }) {
                 </div>
 
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                  <div className="text-xs text-gray-400 mb-1">End Date</div>
-                  <div className="text-white font-semibold">{investment.endDate}</div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <div className="text-xs text-gray-400 mb-1">ROI</div>
                   <div className="text-green-400 font-bold text-xl">
                     {investment.roi}%

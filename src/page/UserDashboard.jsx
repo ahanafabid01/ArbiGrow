@@ -45,6 +45,7 @@ import { LogOut } from "lucide-react";
 import TransactionHistoryPage from "../component/user/TransactionHistoryPage.jsx";
 import { getReferralNetwork } from "../api/user.api.js";
 import DepositPage from "../component/user/DepositUSDT.jsx";
+import WithdrawPage from "../component/user/WithdrawUSDT.jsx";
 import TierSection from "../component/package/TierSection.jsx";
 import PackageModal from "../component/package/PackageModal.jsx";
 import { MyInvestments } from "../component/user/MyInvestments.jsx";
@@ -175,7 +176,6 @@ export function UserDashboard() {
       label: "Withdraw",
       icon: Upload,
       description: "Withdraw funds",
-      comingSoon: true,
     },
     {
       id: "transactions",
@@ -320,6 +320,9 @@ export function UserDashboard() {
             if (activePage === "deposit") {
           return <DepositPage />;
          }
+    if (activePage === "withdraw") {
+      return <WithdrawPage />;
+    }
          //investment
     if (activePage === "investments") {
       return (

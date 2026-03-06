@@ -1,8 +1,8 @@
 import { motion } from 'motion/react';
-import { Calendar, Clock, Eye } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
 
 export function InvestmentCard({ investment, index, onViewDetails }) {
-  const progress = (investment.daysElapsed / investment.durationDays) * 100;
+  const progress = investment.progressPercentage;
 
   const getInvestmentStatusColor = (status) => {
     switch (status) {
@@ -68,7 +68,7 @@ export function InvestmentCard({ investment, index, onViewDetails }) {
       {/* Progress Bar */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-gray-400">Duration Progress</span>
+          <span className="text-xs text-gray-400">ROI Progress</span>
           <span className="text-xs font-semibold text-cyan-400">
             {progress.toFixed(1)}%
           </span>
@@ -84,12 +84,12 @@ export function InvestmentCard({ investment, index, onViewDetails }) {
         </div>
 
         <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
-          <span>{investment.daysElapsed} days</span>
-          <span>{investment.durationDays} days</span>
+          <span>Paid: {investment.profitPercentagePaid.toFixed(2)}%</span>
+          <span>Cap: {investment.roiPercent.toFixed(2)}%</span>
         </div>
       </div>
 
-      {/* Dates */}
+      {/* Timeline */}
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-gray-400" />
@@ -101,13 +101,10 @@ export function InvestmentCard({ investment, index, onViewDetails }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-gray-400" />
-          <div>
-            <div className="text-xs text-gray-500">End Date</div>
-            <div className="text-sm text-white font-medium">
-              {investment.endDate}
-            </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Remaining ROI</div>
+          <div className="text-sm text-white font-medium">
+            {investment.remainingPercentage.toFixed(2)}%
           </div>
         </div>
       </div>

@@ -48,6 +48,14 @@ export const getMyDeposits = () => {
   return api.get("v1/deposits/my", authHeaders());
 };
 
+export const createWithdrawalRequest = (payload) => {
+  return api.post("v1/withdrawals/", payload, authHeaders());
+};
+
+export const getMyWithdrawals = () => {
+  return api.get("v1/withdrawals/my", authHeaders());
+};
+
 export const startMining = () => {
   return api.post("v1/user/start-mining", {}, authHeaders());
 };

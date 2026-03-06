@@ -169,10 +169,17 @@ export function InvestmentsManagement() {
 
     const parsedPercentage = Number(profitPercentage);
     const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
+    const maxAllowedPercentage = Math.min(5, Math.max(0, remainingPercentage));
+    const minAllowedPercentage =
+      remainingPercentage >= 1 ? 1 : Math.min(Math.max(0, remainingPercentage), 0.01);
 
     if (!parsedPercentage || parsedPercentage <= 0) return;
-    if (parsedPercentage > remainingPercentage) {
-      alert(`Only ${remainingPercentage.toFixed(2)}% ROI remaining.`);
+    if (parsedPercentage < minAllowedPercentage) {
+      alert(`Minimum allowed now is ${minAllowedPercentage.toFixed(2)}%.`);
+      return;
+    }
+    if (parsedPercentage > maxAllowedPercentage) {
+      alert(`Only up to ${maxAllowedPercentage.toFixed(2)}% can be added now.`);
       return;
     }
 
@@ -226,9 +233,10 @@ export function InvestmentsManagement() {
     if (Number.isNaN(numericValue) || numericValue < 0) return;
 
     const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
+    const maxAllowedPercentage = Math.min(5, Math.max(0, remainingPercentage));
     const cappedValue = Math.min(
       numericValue,
-      Math.max(0, remainingPercentage),
+      maxAllowedPercentage,
     );
 
     setProfitPercentage(String(cappedValue));

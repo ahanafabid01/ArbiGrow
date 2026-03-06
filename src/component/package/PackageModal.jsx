@@ -26,9 +26,9 @@ export default function PackageModal({
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const [minimumAllowedAmount, setMinimumAllowedAmount] = useState(0);
 
-  const DAILY_ROI = 3;
+  const MIN_DAILY_ROI = 1;
+  const MAX_DAILY_ROI = 5;
   const TOTAL_ROI_LIMIT = 150;
-  const duration = Math.ceil(TOTAL_ROI_LIMIT / DAILY_ROI);
 
   useEffect(() => {
     setPurchaseError("");
@@ -49,14 +49,11 @@ export default function PackageModal({
       try {
         const response = await getMyInvestments();
         const items = Array.isArray(response?.data) ? response.data : [];
-        const now = Date.now();
 
         const highestActiveAmount = items.reduce((maxAmount, investment) => {
-          const endDate = new Date(investment?.end_date).getTime();
           const amount = Number(investment?.invested_amount ?? 0);
-          const isInDuration = !Number.isNaN(endDate) && endDate > now;
-
-          if (!isInDuration) {
+          const isActive = investment?.status === "active";
+          if (!isActive) {
             return maxAmount;
           }
 
@@ -76,7 +73,8 @@ export default function PackageModal({
 
   if (!selectedPackage) return null;
 
-  const dailyProfit = (selectedPackage.amount * DAILY_ROI) / 100;
+  const minDailyProfit = (selectedPackage.amount * MIN_DAILY_ROI) / 100;
+  const maxDailyProfit = (selectedPackage.amount * MAX_DAILY_ROI) / 100;
   const totalProfit = (selectedPackage.amount * TOTAL_ROI_LIMIT) / 100;
   const totalReturn = selectedPackage.amount + totalProfit;
   const isLowerPackage =
@@ -97,7 +95,7 @@ export default function PackageModal({
 
     if (isLowerPackage) {
       setPurchaseError(
-        `You can only buy ${minimumAllowedAmount.toLocaleString()} USDT or higher until your current package duration ends.`,
+        `You can only buy ${minimumAllowedAmount.toLocaleString()} USDT or higher until your current package reaches the ${TOTAL_ROI_LIMIT}% ROI cap.`,
       );
       return;
     }
@@ -110,8 +108,6 @@ export default function PackageModal({
       const payload = {
         package_name: selectedPackage.name,
         amount: selectedPackage.amount,
-        roi_percent: TOTAL_ROI_LIMIT,
-        duration_days: duration,
       };
 
       const purchaseResponse = await buyInvestment(payload);
@@ -196,13 +192,15 @@ export default function PackageModal({
                   </div>
 
                   <div>
-                    <p className="text-gray-400">Duration</p>
-                    <p className="font-semibold text-white">{duration} Days</p>
+                    <p className="text-gray-400">ROI</p>
+                    <p className="font-semibold text-green-400">
+                      {MIN_DAILY_ROI}% - {MAX_DAILY_ROI}% Daily
+                    </p>
                   </div>
 
                   <div>
-                    <p className="text-gray-400">ROI</p>
-                    <p className="font-semibold text-green-400">{DAILY_ROI}% Daily</p>
+                    <p className="text-gray-400">Total ROI Cap</p>
+                    <p className="font-semibold text-cyan-400">{TOTAL_ROI_LIMIT}%</p>
                   </div>
 
                   <div>
@@ -213,9 +211,9 @@ export default function PackageModal({
                   </div>
 
                   <div>
-                    <p className="text-gray-400">Daily Profit</p>
+                    <p className="text-gray-400">Estimated Daily Profit</p>
                     <p className="font-semibold text-purple-400">
-                      {dailyProfit.toFixed(2)} USDT
+                      {minDailyProfit.toFixed(2)} - {maxDailyProfit.toFixed(2)} USDT
                     </p>
                   </div>
                 </div>
@@ -245,7 +243,7 @@ export default function PackageModal({
 
               {isLoggedIn && !eligibilityLoading && isLowerPackage && (
                 <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 py-3 text-center text-sm text-amber-300">
-                  Lower package locked. You can buy {minimumAllowedAmount.toLocaleString()} USDT or higher.
+                  Lower package locked. You can buy {minimumAllowedAmount.toLocaleString()} USDT or higher until active package completion.
                 </p>
               )}
 

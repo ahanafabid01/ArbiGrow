@@ -13,6 +13,7 @@ import useUserStore from "../../store/userStore";
 import { useCallback, useEffect, useState } from "react";
 import {
   getMyDeposits,
+  getMyWithdrawals,
   refreshUserStore,
   startMining,
   claimMining,
@@ -27,6 +28,9 @@ const OverviewPage = ({
   const MINING_CYCLE_MS = 24 * 60 * 60 * 1000;
   const { user, setUser, logout } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
+  const [walletHistoryModal, setWalletHistoryModal] = useState(null);
+  const [depositHistory, setDepositHistory] = useState([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [totalApprovedDeposits, setTotalApprovedDeposits] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
   const [isMiningActionLoading, setIsMiningActionLoading] = useState(false);
@@ -56,12 +60,14 @@ const OverviewPage = ({
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const [, depositsResponse] = await Promise.all([
+        const [, depositsResponse, withdrawalsResponse] = await Promise.all([
           syncUserFromServer(),
           getMyDeposits(),
+          getMyWithdrawals(),
         ]);
 
         const deposits = depositsResponse?.data?.data || [];
+        const withdrawals = withdrawalsResponse?.data?.data || [];
         const approvedTotal = deposits.reduce((sum, deposit) => {
           const isApproved =
             String(deposit?.status || "").toLowerCase() === "approved";
@@ -69,6 +75,8 @@ const OverviewPage = ({
           return isApproved ? sum + (Number.isNaN(amount) ? 0 : amount) : sum;
         }, 0);
 
+        setDepositHistory(deposits);
+        setWithdrawalHistory(withdrawals);
         setTotalApprovedDeposits(approvedTotal);
       } catch (error) {
         if (handleUnauthorized(error)) return;
@@ -119,6 +127,45 @@ const OverviewPage = ({
     return `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatAmount = (value) => {
+    const amount = Number(value);
+    if (Number.isNaN(amount)) return value;
+    return amount % 1 === 0 ? String(amount) : amount.toFixed(2);
+  };
+
+  const getStatusColor = (status) => {
+    switch ((status || "").toLowerCase()) {
+      case "approved":
+        return "text-green-400 bg-green-500/10 border-green-500/30";
+      case "pending":
+        return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
+      case "rejected":
+        return "text-red-400 bg-red-500/10 border-red-500/30";
+      default:
+        return "text-gray-400 bg-gray-500/10 border-gray-500/30";
+    }
+  };
+
+  const walletLabelMap = {
+    main_wallet: "Main Wallet",
+    arbx_wallet: "ARBX Wallet",
+    deposit_wallet: "Deposit Wallet",
+    withdraw_wallet: "Withdraw Wallet",
+    referral_wallet: "Referral Wallet",
+    generation_wallet: "Generation Wallet",
   };
 
   const handleStartMining = async () => {
@@ -176,6 +223,17 @@ const OverviewPage = ({
 
   const canClaim = isMiningActive && remainingTime !== null && remainingTime <= 0;
   const isTimerRunning = isMiningActive && !canClaim;
+  const historyItems =
+    walletHistoryModal === "deposit" ? depositHistory : withdrawalHistory;
+
+  const handleWalletCardClick = (wallet) => {
+    if (wallet.historyType === "deposit") {
+      setWalletHistoryModal("deposit");
+    }
+    if (wallet.historyType === "withdrawal") {
+      setWalletHistoryModal("withdrawal");
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -294,6 +352,7 @@ const OverviewPage = ({
             description: "Total Deposited",
             icon: Download,
             currency: "USDT",
+            historyType: "deposit",
           },
           {
             label: "Withdraw Wallet",
@@ -301,6 +360,7 @@ const OverviewPage = ({
             description: "Total Withdrawn",
             icon: Upload,
             currency: "USDT",
+            historyType: "withdrawal",
           },
           {
             label: "Referral Wallet",
@@ -322,13 +382,24 @@ const OverviewPage = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="p-5 rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-cyan-500/30 transition-all duration-300"
+            onClick={() => handleWalletCardClick(wallet)}
+            className={`p-5 rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-cyan-500/30 transition-all duration-300 ${
+              wallet.historyType ? "cursor-pointer" : ""
+            }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-600/20 flex items-center justify-center">
                 <wallet.icon className="w-5 h-5 text-cyan-400" />
               </div>
               <div className="flex items-center gap-2">
+                {wallet.currency === "ARBX" && isMiningActive && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-[10px] font-semibold text-yellow-300"
+                    title="Mining is active"
+                  >
+                    <Pickaxe className="h-3 w-3" />
+                  </span>
+                )}
                 <div className="text-xs px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                   {wallet.currency}
                 </div>
@@ -342,12 +413,17 @@ const OverviewPage = ({
               {wallet.hasInfo ? (
                 <button
                   type="button"
-                  onClick={() => setIsTokenInfoOpen(true)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setIsTokenInfoOpen(true);
+                  }}
                   className="text-cyan-300 hover:text-cyan-200 transition-colors"
                   aria-label="Open token information"
                 >
                   {wallet.description}
                 </button>
+              ) : wallet.historyType ? (
+                <span className="text-cyan-300">Click to view history</span>
               ) : (
                 wallet.description
               )}
@@ -445,6 +521,142 @@ const OverviewPage = ({
                   >
                     Close
                   </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
+      {/* Wallet History Modal */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {walletHistoryModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-2 sm:p-4 md:p-6 flex items-center justify-center"
+                onClick={() => setWalletHistoryModal(null)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 18, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={(event) => event.stopPropagation()}
+                  className="w-full max-w-5xl rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#151d45] to-[#10183a] border border-white/10 p-4 sm:p-5 md:p-8 max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] overflow-y-auto"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                      {walletHistoryModal === "deposit"
+                        ? "Deposit History"
+                        : "Withdrawal History"}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setWalletHistoryModal(null)}
+                      className="rounded-lg border border-white/20 px-3 py-1.5 text-sm text-gray-300 hover:text-white hover:border-cyan-400/60 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="p-4 text-left text-sm text-gray-400">
+                              Date
+                            </th>
+                            <th className="p-4 text-left text-sm text-gray-400">
+                              Amount
+                            </th>
+                            {walletHistoryModal === "deposit" ? (
+                              <>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  Network
+                                </th>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  TXID
+                                </th>
+                              </>
+                            ) : (
+                              <>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  Source Wallet
+                                </th>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  Destination
+                                </th>
+                              </>
+                            )}
+                            <th className="p-4 text-left text-sm text-gray-400">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {historyItems.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan="5"
+                                className="p-6 text-center text-gray-400"
+                              >
+                                No {walletHistoryModal} history found.
+                              </td>
+                            </tr>
+                          )}
+
+                          {historyItems.map((item) => (
+                            <tr
+                              key={item.id}
+                              className="border-b border-white/5 hover:bg-white/5"
+                            >
+                              <td className="p-4 text-gray-400">
+                                {formatDate(item.created_at)}
+                              </td>
+                              <td className="p-4 font-semibold text-white">
+                                {formatAmount(item.amount)} USDT
+                              </td>
+
+                              {walletHistoryModal === "deposit" ? (
+                                <>
+                                  <td className="p-4 text-gray-400">
+                                    {item.network_name || "-"}
+                                  </td>
+                                  <td className="p-4 text-gray-400 font-mono text-xs">
+                                    {item.txid || "-"}
+                                  </td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="p-4 text-gray-400">
+                                    {walletLabelMap[item.source_wallet] ||
+                                      item.source_wallet ||
+                                      "-"}
+                                  </td>
+                                  <td className="p-4 text-gray-400 font-mono text-xs break-all">
+                                    {item.destination_address || "-"}
+                                  </td>
+                                </>
+                              )}
+
+                              <td className="p-4">
+                                <span
+                                  className={`rounded-full border px-2 py-1 text-xs ${getStatusColor(item.status)}`}
+                                >
+                                  {item.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </motion.div>
               </motion.div>
             )}
