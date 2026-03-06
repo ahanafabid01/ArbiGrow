@@ -10,6 +10,7 @@ import {
   LogOut,
   Wallet,
   Upload,
+  Percent,
   Network,
   Package,
 } from "lucide-react";
@@ -61,6 +62,12 @@ export default function AdminLayout({
       label: "Investments",
       icon: Package,
       description: "Manage investments",
+    },
+    {
+      id: "roi",
+      label: "ROI Management",
+      icon: Percent,
+      description: "Set global ROI",
     },
   ];
 

@@ -2,9 +2,24 @@ import { useState, useEffect, useCallback } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import UserDetailModal from "./UserDetailModal.jsx";
 import useUserStore from "../../store/userStore.js";
-import { getUser, updateKYCStatus } from "../../api/admin.api.js";
+import { getUser, updateKYCStatus, updateUserWallets } from "../../api/admin.api.js";
 import { getAllUsers } from "../../api/admin.api.js";
 
+const WALLET_FIELDS = [
+  "main_wallet",
+  "deposit_wallet",
+  "withdraw_wallet",
+  "referral_wallet",
+  "generation_wallet",
+  "arbx_wallet",
+  "arbx_mining_wallet",
+];
+
+const buildWalletForm = (wallets = {}) =>
+  WALLET_FIELDS.reduce((acc, field) => {
+    acc[field] = String(wallets?.[field] ?? "0");
+    return acc;
+  }, {});
 
 export default function UserManagement({ users, setUsers }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,6 +29,9 @@ export default function UserManagement({ users, setUsers }) {
   const [userStatus, setUserStatus] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
+  const [walletForm, setWalletForm] = useState(buildWalletForm());
+  const [isWalletUpdating, setIsWalletUpdating] = useState(false);
+  const [walletUpdateMessage, setWalletUpdateMessage] = useState("");
 
   // NEW STATES FOR SERVER PAGINATION
   const [totalPages, setTotalPages] = useState(1);
@@ -27,7 +45,9 @@ export default function UserManagement({ users, setUsers }) {
   const handleCloseModal = () => {
     setSelectedUser(null);
     setUpdateMessage("");
+    setWalletUpdateMessage("");
     setIsUpdating(false);
+    setIsWalletUpdating(false);
   };
 
   const fetchUsers = useCallback(async () => {
@@ -59,7 +79,10 @@ export default function UserManagement({ users, setUsers }) {
 
   const handleUserClick = async (user) => {
     setSelectedUser(user);
-    setUserStatus(user.status);
+    setUserStatus(user.status || "pending");
+    setWalletUpdateMessage("");
+    setUpdateMessage("");
+    setWalletForm(buildWalletForm(user?.wallets));
 
     const token = useUserStore.getState().token;
     if (!token) return;
@@ -71,7 +94,8 @@ export default function UserManagement({ users, setUsers }) {
       }
 
       setSelectedUser(() => ({ ...resUserDetails }));
-      setUserStatus(resUserDetails?.kyc?.status);
+      setUserStatus(resUserDetails?.kyc?.status || "pending");
+      setWalletForm(buildWalletForm(resUserDetails?.wallets));
     } catch (err) {
       console.error("Failed to fetch user details:", err);
     }
@@ -119,9 +143,85 @@ export default function UserManagement({ users, setUsers }) {
       setUpdateMessage(response.message);
     } catch (error) {
       console.error("Failed to update KYC:", error);
-      setUpdateMessage("Failed to update KYC status");
+      setUpdateMessage(
+        error?.response?.data?.detail || "Failed to update KYC status",
+      );
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleWalletFieldChange = (field, value) => {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setWalletForm((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+  };
+
+  const hasWalletChanges = selectedUser
+    ? WALLET_FIELDS.some(
+        (field) =>
+          String(walletForm[field] ?? "") !==
+          String(selectedUser?.wallets?.[field] ?? "0"),
+      )
+    : false;
+
+  const handleWalletUpdate = async () => {
+    if (!selectedUser) return;
+
+    const token = useUserStore.getState().token;
+    if (!token) return;
+
+    try {
+      setIsWalletUpdating(true);
+      setWalletUpdateMessage("");
+
+      const payload = {};
+
+      for (const field of WALLET_FIELDS) {
+        const rawValue = String(walletForm[field] ?? "").trim();
+        if (rawValue === "") {
+          setWalletUpdateMessage("Wallet values cannot be empty.");
+          setIsWalletUpdating(false);
+          return;
+        }
+
+        const parsedValue = Number(rawValue);
+        if (Number.isNaN(parsedValue) || parsedValue < 0) {
+          setWalletUpdateMessage("Wallet values must be numbers >= 0.");
+          setIsWalletUpdating(false);
+          return;
+        }
+
+        payload[field] = rawValue;
+      }
+
+      const response = await updateUserWallets(token, selectedUser.id, payload);
+      const updatedWallets = response?.wallets;
+
+      if (!updatedWallets) {
+        throw new Error("Invalid wallet update response");
+      }
+
+      setSelectedUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              wallets: updatedWallets,
+            }
+          : prev,
+      );
+      setWalletForm(buildWalletForm(updatedWallets));
+      setWalletUpdateMessage(response.message || "Wallet balances updated.");
+    } catch (error) {
+      console.error("Failed to update wallets:", error);
+      setWalletUpdateMessage(
+        error?.response?.data?.detail || "Failed to update wallet balances",
+      );
+    } finally {
+      setIsWalletUpdating(false);
     }
   };
 
@@ -468,6 +568,12 @@ export default function UserManagement({ users, setUsers }) {
         handleStatusChange={handleStatusChange}
         isUpdating={isUpdating}
         updateMessage={updateMessage}
+        walletForm={walletForm}
+        onWalletFieldChange={handleWalletFieldChange}
+        onWalletUpdate={handleWalletUpdate}
+        isWalletUpdating={isWalletUpdating}
+        walletUpdateMessage={walletUpdateMessage}
+        hasWalletChanges={hasWalletChanges}
       />
     </div>
   );

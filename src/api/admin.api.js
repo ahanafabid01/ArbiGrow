@@ -140,6 +140,34 @@ export const updateWithdrawalStatus = async (token, withdrawalId, status) => {
   return res.data || {};
 };
 
+export const updateUserWallets = async (token, user_Id, payload) => {
+  const res = await api.patch(
+    `v1/admin/users/${user_Id}/wallets`,
+    payload,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const getAdminRoiSetting = async (token) => {
+  const res = await api.get("v1/admin/roi/", authHeaders(token));
+  return res.data || {};
+};
+
+export const updateAdminRoiSetting = async (token, percentage) => {
+  const res = await api.put(
+    "v1/admin/roi/",
+    { percentage },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const applyAdminRoiToAll = async (token) => {
+  const res = await api.post("v1/admin/roi/apply", {}, authHeaders(token));
+  return res.data || {};
+};
+
 export const getAdminInvestments = async (
   token,
   { page = 1, statusFilter = "", search = "" } = {},

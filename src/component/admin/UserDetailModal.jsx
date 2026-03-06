@@ -8,8 +8,6 @@ import {
   Wallet,
   FileText,
   Users,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
 
 export default function UserDetailModal({
@@ -20,6 +18,12 @@ export default function UserDetailModal({
   handleStatusChange,
   isUpdating,
   updateMessage,
+  walletForm,
+  onWalletFieldChange,
+  onWalletUpdate,
+  isWalletUpdating,
+  walletUpdateMessage,
+  hasWalletChanges,
 }) {
   // console.log("user from modal", selectedUser);
 
@@ -105,28 +109,32 @@ export default function UserDetailModal({
                 <div className="grid gap-3">
                   {[
                     {
+                      key: "main_wallet",
                       label: "Main Wallet",
-                      value: selectedUser?.wallets?.main_wallet || "N/A",
                     },
                     {
+                      key: "deposit_wallet",
                       label: "Deposit Wallet",
-                      value: selectedUser?.wallets?.deposit_wallet || "N/A",
                     },
                     {
+                      key: "withdraw_wallet",
                       label: "Withdraw Wallet",
-                      value: selectedUser?.wallets?.withdraw_wallet || "N/A",
                     },
                     {
+                      key: "referral_wallet",
                       label: "Referral Wallet",
-                      value: selectedUser?.wallets?.referral_wallet || "N/A",
                     },
                     {
+                      key: "generation_wallet",
                       label: "Generation Wallet",
-                      value: selectedUser?.wallets?.generation_wallet || "N/A",
                     },
                     {
+                      key: "arbx_wallet",
                       label: "ARBX Wallet",
-                      value: selectedUser?.wallets?.arbx_wallet || "N/A",
+                    },
+                    {
+                      key: "arbx_mining_wallet",
+                      label: "ARBX Mining Wallet",
                     },
                   ].map((wallet, idx) => (
                     <div
@@ -136,11 +144,32 @@ export default function UserDetailModal({
                       <div className="text-xs text-gray-400 mb-1">
                         {wallet.label}
                       </div>
-                      <div className="text-sm text-white font-mono break-all">
-                        {wallet.value}
-                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.00000000000001"
+                        value={walletForm?.[wallet.key] ?? ""}
+                        onChange={(e) =>
+                          onWalletFieldChange?.(wallet.key, e.target.value)
+                        }
+                        className="w-full rounded-lg border border-white/10 bg-[#0C1035] px-3 py-2 text-sm text-white font-mono focus:border-cyan-500/50 focus:outline-none"
+                      />
                     </div>
                   ))}
+                </div>
+
+                <div className="mt-4 flex flex-col md:flex-row md:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={onWalletUpdate}
+                    disabled={isWalletUpdating || !hasWalletChanges}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isWalletUpdating ? "Updating Wallets..." : "Update Wallets"}
+                  </button>
+                  {walletUpdateMessage && (
+                    <div className="text-sm text-cyan-300">{walletUpdateMessage}</div>
+                  )}
                 </div>
               </div>
 
@@ -220,7 +249,6 @@ export default function UserDetailModal({
                     value={userStatus}
                     onChange={(e) => setUserStatus(e.target.value)}
                     className="flex-1 px-4 py-3 rounded-xl  bg-[#0C1035] border border-white/20 text-white focus:border-cyan-500/50 focus:outline-none"
-                    disabled={selectedUser?.kyc?.status !== "pending"}
                   >
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
@@ -229,7 +257,6 @@ export default function UserDetailModal({
                   <button
                     onClick={handleStatusChange}
                     disabled={
-                      selectedUser?.kyc?.status !== "pending" ||
                       userStatus === selectedUser?.kyc?.status ||
                       isUpdating
                     }
@@ -244,13 +271,6 @@ export default function UserDetailModal({
                     </div>
                   )}
                 </div>
-
-                {selectedUser?.kyc?.status !== "pending" && (
-                  <div className="mt-3 text-sm text-yellow-400 flex items-center gap-2">
-                    <XCircle className="w-4 h-4" />
-                    Status can only be changed for pending users
-                  </div>
-                )}
               </div>
             </div>
           </motion.div>
