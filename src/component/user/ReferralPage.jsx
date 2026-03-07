@@ -201,9 +201,9 @@ const ReferralPage = ({
                 {activeLevel.commissionRate} commission
               </span>
             </div>
-            {/* <span className="text-green-400 font-semibold">
+            <span className="text-green-400 font-semibold">
               ${activeLevel.totalEarnings.toFixed(2)} earned
-            </span> */}
+            </span>
           </div>
         </div>
 
@@ -243,26 +243,36 @@ const ReferralPage = ({
                         </div>
                       </div>
                     </div>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${
+                        user.status === "active"
+                          ? "bg-green-500/10 text-green-400 border-green-500/30"
+                          : "bg-gray-500/10 text-gray-500 border-gray-500/30"
+                      }`}
+                    >
+                      {user?.status === "active" ? "● Active" : "○ Inactive"}
+                      {/* {console.log("fking", user)} */}
+                    </span>
                   </div>
 
                   {/* Stats row */}
-                  <div className="grid grid-cols-1 gap-1.5 mb-3">
+                  <div className="grid grid-cols-3 gap-1.5 mb-3">
                     {[
                       {
                         label: "Joined",
                         value: user.joinDate,
                         cls: "text-white",
                       },
-                      // {
-                      //   label: "Earnings",
-                      //   value: `$${user.totalEarnings.toFixed(2)}`,
-                      //   cls: "text-green-400",
-                      // },
-                      // {
-                      //   label: "Sub-refs",
-                      //   value: String(user.directReferrals),
-                      //   cls: lc.text,
-                      // },
+                      {
+                        label: "Earnings",
+                        value: `$${user.totalEarnings.toFixed(2)}`,
+                        cls: "text-green-400",
+                      },
+                      {
+                        label: "Sub-refs",
+                        value: String(user.directReferrals),
+                        cls: lc.text,
+                      },
                     ].map((s) => (
                       <div
                         key={s.label}

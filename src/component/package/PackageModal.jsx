@@ -76,7 +76,7 @@ export default function PackageModal({
   const minDailyProfit = (selectedPackage.amount * MIN_DAILY_ROI) / 100;
   const maxDailyProfit = (selectedPackage.amount * MAX_DAILY_ROI) / 100;
   const totalProfit = (selectedPackage.amount * TOTAL_ROI_LIMIT) / 100;
-  const totalReturn = selectedPackage.amount + totalProfit;
+  const totalReturn = totalProfit;
   const isLowerPackage =
     isLoggedIn && selectedPackage.amount < minimumAllowedAmount;
 
@@ -130,7 +130,10 @@ export default function PackageModal({
     } catch (error) {
       const detail = error?.response?.data?.detail;
       const message = Array.isArray(detail)
-        ? detail.map((item) => item?.msg).filter(Boolean).join(", ")
+        ? detail
+            .map((item) => item?.msg)
+            .filter(Boolean)
+            .join(", ")
         : detail || "Failed to activate package";
       setPurchaseError(message);
     } finally {
@@ -174,14 +177,18 @@ export default function PackageModal({
                 <h2 className="text-3xl font-bold text-white">
                   {selectedPackage.tier}
                 </h2>
-                <p className="mt-2 text-gray-400">Investment Package Overview</p>
+                <p className="mt-2 text-gray-400">
+                  Investment Package Overview
+                </p>
               </div>
 
               <div className="mb-8 rounded-xl border border-white/10 bg-white/5 p-6">
                 <div className="grid grid-cols-2 gap-6 text-sm">
                   <div>
                     <p className="text-gray-400">Package Name</p>
-                    <p className="font-semibold text-white">{selectedPackage.name}</p>
+                    <p className="font-semibold text-white">
+                      {selectedPackage.name}
+                    </p>
                   </div>
 
                   <div>
@@ -200,7 +207,9 @@ export default function PackageModal({
 
                   <div>
                     <p className="text-gray-400">Total ROI Cap</p>
-                    <p className="font-semibold text-cyan-400">{TOTAL_ROI_LIMIT}%</p>
+                    <p className="font-semibold text-cyan-400">
+                      {TOTAL_ROI_LIMIT}%
+                    </p>
                   </div>
 
                   <div>
@@ -213,7 +222,8 @@ export default function PackageModal({
                   <div>
                     <p className="text-gray-400">Estimated Daily Profit</p>
                     <p className="font-semibold text-purple-400">
-                      {minDailyProfit.toFixed(2)} - {maxDailyProfit.toFixed(2)} USDT
+                      {minDailyProfit.toFixed(2)} - {maxDailyProfit.toFixed(2)}{" "}
+                      USDT
                     </p>
                   </div>
                 </div>
@@ -237,22 +247,30 @@ export default function PackageModal({
                   onClick={handlePurchase}
                   disabled={isPurchasing}
                 >
-                  {isPurchasing ? "Allocating..." : "Proceed to Secure Allocation"}
+                  {isPurchasing
+                    ? "Allocating..."
+                    : "Proceed to Secure Allocation"}
                 </Button>
               )}
 
               {isLoggedIn && !eligibilityLoading && isLowerPackage && (
                 <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 py-3 text-center text-sm text-amber-300">
-                  Lower package locked. You can buy {minimumAllowedAmount.toLocaleString()} USDT or higher until active package completion.
+                  Lower package locked. You can buy{" "}
+                  {minimumAllowedAmount.toLocaleString()} USDT or higher until
+                  active package completion.
                 </p>
               )}
 
               {purchaseError && (
-                <p className="mt-3 text-center text-sm text-red-400">{purchaseError}</p>
+                <p className="mt-3 text-center text-sm text-red-400">
+                  {purchaseError}
+                </p>
               )}
 
               {purchaseSuccess && (
-                <p className="mt-3 text-center text-sm text-green-400">{purchaseSuccess}</p>
+                <p className="mt-3 text-center text-sm text-green-400">
+                  {purchaseSuccess}
+                </p>
               )}
 
               <p className="mt-4 text-center text-xs text-gray-500">

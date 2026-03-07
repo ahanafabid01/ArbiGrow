@@ -1,28 +1,27 @@
 // Platform Statistics section for homepage
-import { motion } from 'motion/react';
-import { Activity } from 'lucide-react';
-import { StatCard } from './StatCard';
-
+import { motion } from "motion/react";
+import { Activity } from "lucide-react";
+import { StatCard } from "./StatCard";
 
 export function PlatformStatistics({ stats }) {
   // Format large numbers with commas
   const formatInteger = (num) => {
-  return Number(num || 0).toLocaleString("en-US");
-   };
- const formatNumber = (num) => {
-  return Number(num || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6,
-  });
-};
+    return Number(num || 0).toLocaleString("en-US");
+  };
+  const formatNumber = (num) => {
+    return Number(num || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+  };
 
-// Format currency
-const formatCurrency = (num) => {
-  return `$${Number(num || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 6,
-    maximumFractionDigits: 6,
-  })}`;
-};
+  // Format currency
+  const formatCurrency = (num) => {
+    return `$${Number(num || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    })}`;
+  };
 
   return (
     <section className="relative py-20 px-6">
@@ -53,13 +52,13 @@ const formatCurrency = (num) => {
           />
           <StatCard
             label="Total Active Investors"
-            value={formatNumber(stats?.total_invested)}
+            value={formatInteger(stats?.active_investors)}
             color="green"
             index={1}
           />
           <StatCard
             label="Total Investments Made"
-            value={formatInteger(stats?.active_investors)}
+            value={formatNumber(stats?.total_invested)}
             color="red"
             index={2}
           />

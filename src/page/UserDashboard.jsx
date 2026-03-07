@@ -112,6 +112,7 @@ export function UserDashboard() {
                   totalEarnings: Number(member.total_earnings || 0),
                   referredBy: member.referred_by || "",
                   directReferrals: Number(member.direct_referrals || 0),
+                  status: member.status || "",
                 }))
               : [],
           };
@@ -196,7 +197,7 @@ export function UserDashboard() {
       label: "Market",
       icon: TrendingUp,
       description: "Crypto market overview",
-      // comingSoon: true,
+      comingSoon: true,
     },
     {
       id: "profile",

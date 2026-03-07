@@ -176,7 +176,7 @@ export function SecurityCompliance() {
               {/* Certificate Container */}
               <div className="flex justify-center items-center max-h-[80vh] overflow-auto">
                 <img
-                  src="/certificate.jpeg"
+                  src="/certificate-with-sign.jpeg"
                   alt="Certificate"
                   className="max-h-[80vh] w-auto object-contain rounded-xl shadow-2xl"
                 />
