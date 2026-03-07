@@ -13,6 +13,7 @@ import {
   Percent,
   Network,
   Package,
+  Activity
 } from "lucide-react";
 import logo from "../../assets/Arbigrow-Logo.png";
 import useUserStore from "../../store/userStore";
@@ -63,6 +64,12 @@ export default function AdminLayout({
       icon: Package,
       description: "Manage investments",
     },
+  {
+  id: "statistics",
+  label: "Platform Statistics",
+  icon: Activity,
+  description: "Update statistics",
+},
     {
       id: "roi",
       label: "ROI Management",

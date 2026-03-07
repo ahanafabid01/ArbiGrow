@@ -705,3 +705,11 @@ export const popularCurrencies = [
     icon: 'M'
   }
 ];
+
+export const mockPlatformStats = {
+  totalUsers: 1250000,
+  totalActiveInvestors: 793247,
+  totalInvestmentsMade: 9884731,
+  totalProfitsGenerated: 940948000,
+  successfulWithdrawals: 22438296
+};

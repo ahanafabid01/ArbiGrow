@@ -215,3 +215,27 @@ export const getAdminDashboardOverview = async (token) => {
   const res = await api.get("v1/admin/dashboard-overview", authHeaders(token));
   return res.data || {};
 };
+
+// Platform Statistics
+export const getPlatformStats = async (token) => {
+  const res = await api.get("v1/platform-stats/", authHeaders(token));
+  return res.data || {};
+};
+
+export const createPlatformStats = async (token, payload) => {
+  const res = await api.post(
+    "v1/platform-stats/",
+    payload,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const updatePlatformStats = async (token, payload) => {
+  const res = await api.patch(
+    "v1/platform-stats/",
+    payload,
+    authHeaders(token),
+  );
+  return res.data || {};
+};
