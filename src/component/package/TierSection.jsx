@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { tierGroups } from "../../constants/strategyData";
-import Logo from "../../assets/Arbigrow-favicon.png";
+import Logo from "../../assets/Arbigrow-Logo.png";
 
 export default function TierSection({ onSelect }) {
   return (
