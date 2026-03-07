@@ -196,7 +196,7 @@ export function UserDashboard() {
       label: "Market",
       icon: TrendingUp,
       description: "Crypto market overview",
-      comingSoon: true,
+      // comingSoon: true,
     },
     {
       id: "profile",

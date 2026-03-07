@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle, ChevronLeft, ChevronRight, Copy, XCircle } from "lucide-react";
+import {
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  XCircle,
+} from "lucide-react";
 import useUserStore from "../../store/userStore.js";
 import {
   getAdminWithdrawals,
@@ -39,7 +45,9 @@ const WALLET_LABELS = {
 };
 
 const truncateAddress = (value) =>
-  value?.length > 24 ? `${value.substring(0, 12)}...${value.substring(value.length - 8)}` : value;
+  value?.length > 24
+    ? `${value.substring(0, 12)}...${value.substring(value.length - 8)}`
+    : value;
 
 export default function WithdrawalRequests() {
   const PAGE_SIZE = 50;
@@ -190,6 +198,9 @@ export default function WithdrawalRequests() {
                   User
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-400">
+                  Network
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-400">
                   Amount
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-400">
@@ -213,7 +224,10 @@ export default function WithdrawalRequests() {
             <tbody className="divide-y divide-white/5">
               {loading && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-gray-400">
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-400"
+                  >
                     Loading withdrawals...
                   </td>
                 </tr>
@@ -221,7 +235,10 @@ export default function WithdrawalRequests() {
 
               {!loading && withdrawals.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-gray-400">
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-400"
+                  >
                     No withdrawal requests found.
                   </td>
                 </tr>
@@ -236,10 +253,22 @@ export default function WithdrawalRequests() {
                     withdrawal.source_wallet;
 
                   return (
-                    <tr key={withdrawal.id} className="transition-colors hover:bg-white/5">
+                    <tr
+                      key={withdrawal.id}
+                      className="transition-colors hover:bg-white/5"
+                    >
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-white">{withdrawal?.user?.name || "-"}</div>
-                        <div className="text-xs text-gray-400">{withdrawal?.user?.email || "-"}</div>
+                        <div className="font-semibold text-white">
+                          {withdrawal?.user?.name || "-"}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {withdrawal?.user?.email || "-"}
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span className="font-bold text-white">
+                          {withdrawal?.network_name}
+                        </span>
                       </td>
 
                       <td className="whitespace-nowrap px-6 py-4">
@@ -248,11 +277,15 @@ export default function WithdrawalRequests() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 text-gray-300">{sourceWalletLabel}</td>
+                      <td className="px-6 py-4 text-gray-300">
+                        {sourceWalletLabel}
+                      </td>
 
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => copyAddress(withdrawal.destination_address)}
+                          onClick={() =>
+                            copyAddress(withdrawal.destination_address)
+                          }
                           className="flex items-center gap-2 font-mono text-sm text-blue-400 hover:text-blue-300"
                           type="button"
                         >
@@ -260,11 +293,15 @@ export default function WithdrawalRequests() {
                           <Copy className="h-3.5 w-3.5" />
                         </button>
                         {withdrawal.note && (
-                          <p className="mt-1 text-xs text-gray-500">{withdrawal.note}</p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {withdrawal.note}
+                          </p>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-300">{formatDate(withdrawal.created_at)}</td>
+                      <td className="px-6 py-4 text-gray-300">
+                        {formatDate(withdrawal.created_at)}
+                      </td>
 
                       <td className="px-6 py-4">
                         <span
@@ -278,7 +315,9 @@ export default function WithdrawalRequests() {
                         {status === "pending" ? (
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleStatusChange(withdrawal.id, "approved")}
+                              onClick={() =>
+                                handleStatusChange(withdrawal.id, "approved")
+                              }
                               disabled={isBusy}
                               className="rounded-lg border border-green-500/30 bg-green-600/20 px-3 py-1.5 text-xs font-semibold text-green-400 transition-all hover:bg-green-600/30 disabled:cursor-not-allowed disabled:opacity-60"
                               type="button"
@@ -288,7 +327,9 @@ export default function WithdrawalRequests() {
                             </button>
 
                             <button
-                              onClick={() => handleStatusChange(withdrawal.id, "rejected")}
+                              onClick={() =>
+                                handleStatusChange(withdrawal.id, "rejected")
+                              }
                               disabled={isBusy}
                               className="rounded-lg border border-red-500/30 bg-red-600/20 px-3 py-1.5 text-xs font-semibold text-red-400 transition-all hover:bg-red-600/30 disabled:cursor-not-allowed disabled:opacity-60"
                               type="button"
@@ -298,7 +339,9 @@ export default function WithdrawalRequests() {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-500">No actions</span>
+                          <span className="text-xs text-gray-500">
+                            No actions
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -324,7 +367,9 @@ export default function WithdrawalRequests() {
             </button>
 
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+              }
               disabled={currentPage >= totalPages || loading}
               className="rounded-lg border border-white/10 bg-white/5 p-2 text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
