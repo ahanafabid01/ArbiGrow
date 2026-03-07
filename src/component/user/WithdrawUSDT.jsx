@@ -3,6 +3,7 @@ import { AlertTriangle, ChevronDown, Copy, Send } from "lucide-react";
 import useUserStore from "../../store/userStore.js";
 import {
   createWithdrawalRequest,
+  getActiveDepositNetworks,
   getMyWithdrawals,
   refreshUserStore,
 } from "../../api/user.api.js";
@@ -52,6 +53,8 @@ export default function WithdrawPage() {
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
   const [selectedWalletKey, setSelectedWalletKey] = useState("");
+  const [selectedNetworkId, setSelectedNetworkId] = useState("");
+  const [networks, setNetworks] = useState([]);
   const [amount, setAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [note, setNote] = useState("");
@@ -103,9 +106,20 @@ export default function WithdrawPage() {
     [walletOptions, selectedWalletKey],
   );
 
+  const selectedNetwork = useMemo(
+    () => networks.find((network) => String(network.id) === selectedNetworkId),
+    [networks, selectedNetworkId],
+  );
+
   const walletLabelMap = useMemo(
     () => new Map(walletOptions.map((wallet) => [wallet.key, wallet.label])),
     [walletOptions],
+  );
+
+  const networkDisplayMap = useMemo(
+    () =>
+      new Map(networks.map((network) => [network.network_name, network.display_name])),
+    [networks],
   );
 
   const amountNumber = useMemo(() => {
@@ -132,9 +146,10 @@ export default function WithdrawPage() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const [userResponse, withdrawalsResponse] = await Promise.all([
+        const [userResponse, withdrawalsResponse, networksResponse] = await Promise.all([
           refreshUserStore(),
           getMyWithdrawals(),
+          getActiveDepositNetworks(),
         ]);
 
         if (userResponse?.data?.user) {
@@ -142,9 +157,11 @@ export default function WithdrawPage() {
         }
 
         setWithdrawals(withdrawalsResponse?.data?.data || []);
+        setNetworks(networksResponse?.data?.data || []);
       } catch (error) {
         setErrorMessage(getErrorMessage(error));
         setWithdrawals([]);
+        setNetworks([]);
       } finally {
         setIsLoading(false);
       }
@@ -160,6 +177,11 @@ export default function WithdrawPage() {
 
     if (!selectedWallet) {
       setErrorMessage("Please select a wallet.");
+      return;
+    }
+
+    if (!selectedNetwork) {
+      setErrorMessage("Please select a network.");
       return;
     }
 
@@ -200,6 +222,7 @@ export default function WithdrawPage() {
     try {
       const response = await createWithdrawalRequest({
         source_wallet: selectedWallet.key,
+        network_name: selectedNetwork.network_name,
         amount: amount.trim(),
         destination_address: normalizedAddress,
         note: note.trim(),
@@ -275,7 +298,8 @@ export default function WithdrawPage() {
                 disabled={wallet.disabled}
                 style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
               >
-                {wallet.label} ({wallet.balance.toFixed(7)} {wallet.disabled ? "(Coming Soon" : ""})
+                {wallet.label} ({wallet.balance.toFixed(7)}
+                {wallet.disabled ? " (Coming Soon)" : ""})
               </option>
             ))}
           </select>
@@ -300,6 +324,43 @@ export default function WithdrawPage() {
               </p>
             </div>
           </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-xl">
+        <h3 className="mb-4 text-lg font-semibold">Select Network</h3>
+
+        <div className="relative">
+          <select
+            value={selectedNetworkId}
+            onChange={(event) => setSelectedNetworkId(event.target.value)}
+            disabled={isLoading || networks.length === 0}
+            className="w-full appearance-none rounded-xl border border-white/10 bg-[#0A122C] px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option
+              value=""
+              style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
+            >
+              {isLoading ? "Loading networks..." : "Select network"}
+            </option>
+            {networks.map((network) => (
+              <option
+                key={network.id}
+                value={String(network.id)}
+                style={{ color: "#0f172a", backgroundColor: "#ffffff" }}
+              >
+                {network.display_name}
+              </option>
+            ))}
+          </select>
+
+          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+        </div>
+
+        {!isLoading && networks.length === 0 && (
+          <p className="mt-3 text-sm text-yellow-300">
+            No active withdrawal network found. Please contact support.
+          </p>
         )}
       </div>
 
@@ -352,7 +413,12 @@ export default function WithdrawPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting || !hasEnoughMainWalletBalance}
+            disabled={
+              isSubmitting ||
+              isLoading ||
+              networks.length === 0 ||
+              !hasEnoughMainWalletBalance
+            }
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Send size={18} />
@@ -373,6 +439,7 @@ export default function WithdrawPage() {
                 <th className="p-4 text-left text-sm text-gray-400">Date</th>
                 <th className="p-4 text-left text-sm text-gray-400">Amount</th>
                 <th className="p-4 text-left text-sm text-gray-400">Wallet</th>
+                <th className="p-4 text-left text-sm text-gray-400">Network</th>
                 <th className="p-4 text-left text-sm text-gray-400">Address</th>
                 <th className="p-4 text-left text-sm text-gray-400">Status</th>
               </tr>
@@ -381,7 +448,7 @@ export default function WithdrawPage() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan="5" className="p-6 text-center text-gray-400">
+                  <td colSpan="6" className="p-6 text-center text-gray-400">
                     Loading withdrawal history...
                   </td>
                 </tr>
@@ -389,7 +456,7 @@ export default function WithdrawPage() {
 
               {!isLoading && withdrawals.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="p-6 text-center text-gray-400">
+                  <td colSpan="6" className="p-6 text-center text-gray-400">
                     No withdrawal history found.
                   </td>
                 </tr>
@@ -401,6 +468,10 @@ export default function WithdrawPage() {
                 const label = isLongAddress
                   ? `${address.slice(0, 10)}...${address.slice(-6)}`
                   : address;
+                const networkLabel = withdrawal.network_name
+                  ? networkDisplayMap.get(withdrawal.network_name) ||
+                    withdrawal.network_name
+                  : "-";
 
                 return (
                   <tr
@@ -417,6 +488,7 @@ export default function WithdrawPage() {
                       {walletLabelMap.get(withdrawal.source_wallet) ||
                         withdrawal.source_wallet}
                     </td>
+                    <td className="p-4 text-gray-400">{networkLabel}</td>
                     <td className="p-4">
                       <button
                         onClick={() => copyAddress(address)}
