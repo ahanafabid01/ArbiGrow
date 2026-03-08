@@ -62,12 +62,13 @@ const OverviewPage = ({ setActivePage }) => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const [, depositsResponse, withdrawalsResponse, earningsResponse] = await Promise.all([
-          syncUserFromServer(),
-          getMyDeposits(),
-          getMyWithdrawals(),
-          getMyEarningsHistory(),
-        ]);
+        const [, depositsResponse, withdrawalsResponse, earningsResponse] =
+          await Promise.all([
+            syncUserFromServer(),
+            getMyDeposits(),
+            getMyWithdrawals(),
+            getMyEarningsHistory(),
+          ]);
 
         const deposits = depositsResponse?.data?.data || [];
         const withdrawals = withdrawalsResponse?.data?.data || [];
@@ -226,16 +227,15 @@ const OverviewPage = ({ setActivePage }) => {
     }
   };
 
-  const canClaim = isMiningActive && remainingTime !== null && remainingTime <= 0;
+  const canClaim =
+    isMiningActive && remainingTime !== null && remainingTime <= 0;
   const isTimerRunning = isMiningActive && !canClaim;
   const historyItems =
     walletHistoryModal === "deposit"
       ? depositHistory
       : walletHistoryModal === "withdrawal"
         ? withdrawalHistory
-        : earningsHistory.filter(
-            (e) => e.wallet_type === walletHistoryModal,
-          );
+        : earningsHistory.filter((e) => e.wallet_type === walletHistoryModal);
 
   const handleWalletCardClick = (wallet) => {
     if (wallet.historyType === "deposit") {
@@ -251,76 +251,74 @@ const OverviewPage = ({ setActivePage }) => {
       setWalletHistoryModal("generation");
     }
   };
-const shortcuts = [
-  {
-    id: "deposit",
-    label: "Deposit",
-    icon: Download,
-    onClick: () => setActivePage("deposit"),
-  },
-  {
-    id: "packages",
-    label: "Packages",
-    icon: Coins,
-    onClick: () => setActivePage("packages"),
-  },
-  {
-    id: "investments",
-    label: "My Investments",
-    icon: Wallet,
-    onClick: () => setActivePage("investments"),
-  },
-  {
-    id: "withdraw",
-    label: "Withdraw",
-    icon: Upload,
-    onClick: () => setActivePage("withdraw"),
-  },
-  {
-    id: "market",
-    label: "Market",
-    icon: TrendingUp,
-    onClick: () => setActivePage("market"),
-  },
-  {
-    id: "referral",
-    label: "Referral",
-    icon: Users,
-    onClick: () => setActivePage("referral"),
-  },
+  const shortcuts = [
+    {
+      id: "deposit",
+      label: "Deposit",
+      icon: Download,
+      onClick: () => setActivePage("deposit"),
+    },
+    {
+      id: "packages",
+      label: "Packages",
+      icon: Coins,
+      onClick: () => setActivePage("packages"),
+    },
+    {
+      id: "investments",
+      label: "My Investments",
+      icon: Wallet,
+      onClick: () => setActivePage("investments"),
+    },
+    {
+      id: "withdraw",
+      label: "Withdraw",
+      icon: Upload,
+      onClick: () => setActivePage("withdraw"),
+    },
+    {
+      id: "market",
+      label: "Market",
+      icon: TrendingUp,
+      onClick: () => setActivePage("market"),
+    },
+    {
+      id: "referral",
+      label: "Referral",
+      icon: Users,
+      onClick: () => setActivePage("referral"),
+    },
 
-  // NEW
-  {
-    id: "profile",
-    label: "Profile",
-    icon: User,
-    onClick: () => setActivePage("profile"),
-  },
-  {
-    id: "support",
-    label: "Support",
-    icon: MessageCircle,
-    onClick: () => window.open("https://t.me/ArbigrowOfficial", "_blank"),
-  },
-];
+    // NEW
+    {
+      id: "profile",
+      label: "Profile",
+      icon: User,
+      onClick: () => setActivePage("profile"),
+    },
+    {
+      id: "support",
+      label: "Support",
+      icon: MessageCircle,
+      onClick: () => window.open("https://t.me/ArbigrowOfficial", "_blank"),
+    },
+  ];
 
- 
+  // Api
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getPlatformStats();
+        // console.log("DAta",data)
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to load platform stats", error);
+      }
+    };
 
-// Api 
-const [stats, setStats] = useState(null);
-useEffect(() => {
-  const fetchStats = async () => {
-    try {
-      const data = await getPlatformStats();
-      console.log("DAta",data)
-      setStats(data);
-    } catch (error) {
-      console.error("Failed to load platform stats", error);
-    }
-  };
-
-  fetchStats();
-}, []);
+    fetchStats();
+  }, []);
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Market Prices Bar */}
@@ -410,11 +408,11 @@ useEffect(() => {
           Here's your wallet overview and recent activities
         </p>
       </div>
-         {/* Quick Shortcuts */}
-    <QuickShortcuts shortcuts={shortcuts} />
+      {/* Quick Shortcuts */}
+      <QuickShortcuts shortcuts={shortcuts} />
 
-    {/* Statistics Ticker */}
-    {stats && <StatisticsTicker stats={stats} />}
+      {/* Statistics Ticker */}
+      {stats && <StatisticsTicker stats={stats} />}
 
       {/* USDT Wallet Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -762,12 +760,14 @@ useEffect(() => {
                               <td className="p-4">
                                 <span
                                   className={`rounded-full border px-2 py-1 text-xs ${
-                                    walletHistoryModal === "deposit" || walletHistoryModal === "withdrawal"
+                                    walletHistoryModal === "deposit" ||
+                                    walletHistoryModal === "withdrawal"
                                       ? getStatusColor(item.status)
                                       : "text-green-400 bg-green-500/10 border-green-500/30"
                                   }`}
                                 >
-                                  {walletHistoryModal === "deposit" || walletHistoryModal === "withdrawal"
+                                  {walletHistoryModal === "deposit" ||
+                                  walletHistoryModal === "withdrawal"
                                     ? item.status
                                     : "received"}
                                 </span>
@@ -841,7 +841,7 @@ useEffect(() => {
                 ? handleStartMining
                 : canClaim
                   ? handleClaimMining
-                : null
+                  : null
             }
             disabled={isMiningActionLoading || isTimerRunning}
             className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 ${
@@ -852,11 +852,13 @@ useEffect(() => {
           >
             <Pickaxe className="w-5 h-5" />
 
-            {!isMiningActive && (isMiningActionLoading ? "Starting..." : "Start Mining")}
+            {!isMiningActive &&
+              (isMiningActionLoading ? "Starting..." : "Start Mining")}
 
             {isTimerRunning && formatTime(remainingTime)}
 
-            {canClaim && (isMiningActionLoading ? "Claiming..." : "Claim Reward")}
+            {canClaim &&
+              (isMiningActionLoading ? "Claiming..." : "Claim Reward")}
           </button>
         </div>
         {miningActionError && (

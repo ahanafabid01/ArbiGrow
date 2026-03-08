@@ -58,7 +58,7 @@ export default function LoginForm() {
       setIsSuccess(false);
 
       const res = await loginUser(formData);
-      console.log(res, "login api response");
+      // console.log(res, "login api response");
       //  console.log("toiken", res?.data);
 
       setUser(res?.data?.user);

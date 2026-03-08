@@ -31,7 +31,7 @@ export function StatisticsManagement() {
     try {
       const data = await getPlatformStats(token);
       setStats(data);
-      console.log("menesment Data", data);
+      // console.log("menesment Data", data);
     } catch (err) {
       console.error("Failed to fetch statistics", err);
     } finally {

@@ -20,14 +20,14 @@ import { PlatformStatistics } from "../component/PlatformStatistics.jsx";
 import { getPlatformStats } from "../api/admin.api.js";
 
 const Home = () => {
-    const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await getPlatformStats();
         setStats(data);
-        console.log("Static Data", data)
+        // console.log("Static Data", data)
       } catch (error) {
         console.error("Failed to load platform stats", error);
       }
@@ -36,7 +36,7 @@ const Home = () => {
     fetchStats();
   }, []);
   return (
-     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <Navbar />
       <div id="home">
         <Hero />
@@ -47,7 +47,7 @@ const Home = () => {
       {stats && <PlatformStatistics stats={stats} />}
       <WhyChooseUs />
       <MemberBenefits />
-      
+
       <div id="architecture">
         <TechnicalArchitecture />
       </div>
