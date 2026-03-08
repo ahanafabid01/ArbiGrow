@@ -38,7 +38,7 @@ export function StatisticsTicker({ stats }) {
     {
       icon: DollarSign,
       label: "Profits Generated",
-      value: `$${stats.total_profit_shared.toLocaleString()}`,
+      value: stats.total_profit_shared.toLocaleString(),
       color: "text-green-400",
     },
     {
@@ -88,7 +88,7 @@ export function StatisticsTicker({ stats }) {
               <div>
                 <div className="text-xs text-gray-400">{stat.label}</div>
                 <div className={`text-sm font-bold ${stat.color}`}>
-                  {stat.value}
+                  {Number(stat.value)?.toFixed(4) ?? "0.0000"}
                 </div>
               </div>
 
