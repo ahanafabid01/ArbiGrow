@@ -3,6 +3,7 @@ import useUserStore from "../../store/userStore.js";
 import {
   applyRoiByTier,
   applyRoiByPackage,
+  getScheduledRoi,
 } from "../../api/admin.api.js";
 import { tierGroups } from "../../constants/strategyData.js";
 
@@ -54,6 +55,7 @@ export default function RoiManagement() {
   const [categoryPercentage, setCategoryPercentage] = useState("3");
   const [applyingCategory, setApplyingCategory] = useState(false);
   const [categorySummary, setCategorySummary] = useState(null);
+  const [scheduledRates, setScheduledRates] = useState({});
 
   // ── Messages ────────────────────────────────────────────────────────────────
   const [errorMessage, setErrorMessage] = useState("");
@@ -70,6 +72,25 @@ export default function RoiManagement() {
     setErrorMessage("");
   }, [selectedCategory]);
 
+  // Load currently saved scheduled rates from backend
+  useEffect(() => {
+    const loadScheduled = async () => {
+      try {
+        const data = await getScheduledRoi(token);
+        if (data?.scheduled) {
+          const rates = {};
+          Object.entries(data.scheduled).forEach(([pkg, info]) => {
+            rates[pkg] = info.percentage;
+          });
+          setScheduledRates(rates);
+        }
+      } catch {
+        // Non-critical — UI still usable without pre-loaded rates
+      }
+    };
+    if (token) loadScheduled();
+  }, [token]);
+
   const handleApplyToSelection = async () => {
     const numeric = Number(categoryPercentage);
     if (Number.isNaN(numeric) || numeric <= 0 || numeric > 25) {
@@ -80,28 +101,25 @@ export default function RoiManagement() {
       setApplyingCategory(true);
       setErrorMessage("");
       setSuccessMessage("");
-      setCategorySummary(null);
 
-      let response;
       if (selectedPackageName === ALL_PACKAGES) {
-        response = await applyRoiByTier(token, selectedCategory, numeric);
+        await applyRoiByTier(token, selectedCategory, numeric);
+        const tier = tierGroups.find((t) => t.name === selectedCategory);
+        setScheduledRates((prev) => {
+          const updated = { ...prev };
+          tier?.packages.forEach((pkg) => { updated[pkg.name] = numeric; });
+          return updated;
+        });
         setSuccessMessage(
-          `${response?.applied_percentage}% ROI applied to all active "${selectedCategory}" investments.`,
+          `Saved ${numeric}% daily ROI for all "${selectedCategory}" packages — applies tonight at 12:00 AM UTC.`,
         );
       } else {
-        response = await applyRoiByPackage(token, selectedPackageName, numeric);
+        await applyRoiByPackage(token, selectedPackageName, numeric);
+        setScheduledRates((prev) => ({ ...prev, [selectedPackageName]: numeric }));
         setSuccessMessage(
-          `${response?.applied_percentage}% ROI applied to "${selectedPackageName}" investments.`,
+          `Saved ${numeric}% daily ROI for "${selectedPackageName}" — applies tonight at 12:00 AM UTC.`,
         );
       }
-
-      setCategorySummary({
-        appliedPercentage: response?.applied_percentage,
-        processed: response?.processed ?? 0,
-        credited: response?.credited ?? 0,
-        completedNow: response?.completed_now ?? 0,
-        skipped: response?.skipped ?? 0,
-      });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -110,10 +128,10 @@ export default function RoiManagement() {
   };
 
   const applyButtonLabel = () => {
-    if (applyingCategory) return "Applying...";
+    if (applyingCategory) return "Saving...";
     if (selectedPackageName === ALL_PACKAGES)
-      return `Apply ${categoryPercentage}% to All "${selectedCategory}" Packages`;
-    return `Apply ${categoryPercentage}% to "${selectedPackageName}"`;
+      return `Save ${categoryPercentage}% Daily Rate for All "${selectedCategory}" Packages`;
+    return `Save ${categoryPercentage}% Daily Rate for "${selectedPackageName}"`;
   };
 
   return (
@@ -127,8 +145,20 @@ export default function RoiManagement() {
           </span>
         </h1>
         <p className="text-gray-400">
-          Distribute profits by category or package to all active investments
+          Set daily ROI rates per package — profits are distributed automatically at 12:00 AM UTC every day
         </p>
+      </div>
+
+      {/* Scheduled notice */}
+      <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/80">
+        <span className="mt-0.5 shrink-0 text-amber-400">⏰</span>
+        <span>
+          Rates saved here are{" "}
+          <strong className="text-amber-300">not applied immediately</strong>. The
+          system automatically distributes profits to all active investments once
+          daily at{" "}
+          <strong className="text-amber-300">12:00 AM UTC</strong>.
+        </span>
       </div>
 
       {/* Alerts */}
@@ -152,9 +182,9 @@ export default function RoiManagement() {
           <p className="text-sm text-gray-400">
             Select a category, then pick a specific package or leave on{" "}
             <span className="text-cyan-300 font-medium">All Packages</span> to
-            apply to the entire category. Use{" "}
-            <span className="text-cyan-300 font-medium">Apply to All</span> to
-            distribute the same profit to every active investment in a category.
+            set the rate for the entire category. Saved rates are applied once
+            automatically at{" "}
+            <span className="text-cyan-300 font-medium">12:00 AM UTC</span> every day.
           </p>
         </div>
 
@@ -201,7 +231,7 @@ export default function RoiManagement() {
         {/* Row 2: ROI % input */}
         <div>
           <label className="text-sm text-gray-400 block mb-2">
-            ROI Percentage
+            Daily ROI Percentage (%)
           </label>
           <input
             type="number"
@@ -264,7 +294,9 @@ export default function RoiManagement() {
                       ${pkg.amount.toLocaleString()}
                     </p>
                     <p className="text-xs text-cyan-400 mt-auto">
-                      Max ROI {pkg.roi.max}%
+                      {scheduledRates[pkg.name] != null
+                        ? `Daily: ${scheduledRates[pkg.name]}%`
+                        : "Not set"}
                     </p>
                   </button>
                 );

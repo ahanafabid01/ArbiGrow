@@ -17,6 +17,7 @@ import {
   refreshUserStore,
   startMining,
   claimMining,
+  getMyEarningsHistory,
 } from "../../api/user.api.js";
 
 const OverviewPage = (
@@ -27,6 +28,7 @@ const OverviewPage = (
   const [walletHistoryModal, setWalletHistoryModal] = useState(null);
   const [depositHistory, setDepositHistory] = useState([]);
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [earningsHistory, setEarningsHistory] = useState([]);
   const [totalApprovedDeposits, setTotalApprovedDeposits] = useState(null);
   const [remainingTime, setRemainingTime] = useState(null);
   const [isMiningActionLoading, setIsMiningActionLoading] = useState(false);
@@ -56,14 +58,16 @@ const OverviewPage = (
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const [, depositsResponse, withdrawalsResponse] = await Promise.all([
+        const [, depositsResponse, withdrawalsResponse, earningsResponse] = await Promise.all([
           syncUserFromServer(),
           getMyDeposits(),
           getMyWithdrawals(),
+          getMyEarningsHistory(),
         ]);
 
         const deposits = depositsResponse?.data?.data || [];
         const withdrawals = withdrawalsResponse?.data?.data || [];
+        const earnings = earningsResponse?.data?.data || [];
         const approvedTotal = deposits.reduce((sum, deposit) => {
           const isApproved =
             String(deposit?.status || "").toLowerCase() === "approved";
@@ -73,6 +77,7 @@ const OverviewPage = (
 
         setDepositHistory(deposits);
         setWithdrawalHistory(withdrawals);
+        setEarningsHistory(earnings);
         setTotalApprovedDeposits(approvedTotal);
       } catch (error) {
         if (handleUnauthorized(error)) return;
@@ -220,7 +225,13 @@ const OverviewPage = (
   const canClaim = isMiningActive && remainingTime !== null && remainingTime <= 0;
   const isTimerRunning = isMiningActive && !canClaim;
   const historyItems =
-    walletHistoryModal === "deposit" ? depositHistory : withdrawalHistory;
+    walletHistoryModal === "deposit"
+      ? depositHistory
+      : walletHistoryModal === "withdrawal"
+        ? withdrawalHistory
+        : earningsHistory.filter(
+            (e) => e.wallet_type === walletHistoryModal,
+          );
 
   const handleWalletCardClick = (wallet) => {
     if (wallet.historyType === "deposit") {
@@ -228,6 +239,12 @@ const OverviewPage = (
     }
     if (wallet.historyType === "withdrawal") {
       setWalletHistoryModal("withdrawal");
+    }
+    if (wallet.historyType === "referral") {
+      setWalletHistoryModal("referral");
+    }
+    if (wallet.historyType === "generation") {
+      setWalletHistoryModal("generation");
     }
   };
 
@@ -364,6 +381,7 @@ const OverviewPage = (
             description: "Referral Earnings",
             icon: Users,
             currency: "USDT",
+            historyType: "referral",
           },
           {
             label: "Generation Wallet",
@@ -371,6 +389,7 @@ const OverviewPage = (
             description: "Generation Bonus",
             icon: TrendingUp,
             currency: "USDT",
+            historyType: "generation",
           },
         ].map((wallet, idx) => (
           <motion.div
@@ -548,7 +567,11 @@ const OverviewPage = (
                     <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                       {walletHistoryModal === "deposit"
                         ? "Deposit History"
-                        : "Withdrawal History"}
+                        : walletHistoryModal === "withdrawal"
+                          ? "Withdrawal History"
+                          : walletHistoryModal === "referral"
+                            ? "Referral Earnings History"
+                            : "Generation Earnings History"}
                     </h3>
                     <button
                       type="button"
@@ -579,13 +602,22 @@ const OverviewPage = (
                                   TXID
                                 </th>
                               </>
-                            ) : (
+                            ) : walletHistoryModal === "withdrawal" ? (
                               <>
                                 <th className="p-4 text-left text-sm text-gray-400">
                                   Source Wallet
                                 </th>
                                 <th className="p-4 text-left text-sm text-gray-400">
                                   Destination
+                                </th>
+                              </>
+                            ) : (
+                              <>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  From User
+                                </th>
+                                <th className="p-4 text-left text-sm text-gray-400">
+                                  Level
                                 </th>
                               </>
                             )}
@@ -627,7 +659,7 @@ const OverviewPage = (
                                     {item.txid || "-"}
                                   </td>
                                 </>
-                              ) : (
+                              ) : walletHistoryModal === "withdrawal" ? (
                                 <>
                                   <td className="p-4 text-gray-400">
                                     {walletLabelMap[item.source_wallet] ||
@@ -638,13 +670,28 @@ const OverviewPage = (
                                     {item.destination_address || "-"}
                                   </td>
                                 </>
+                              ) : (
+                                <>
+                                  <td className="p-4 text-gray-400">
+                                    {item.from_username || "-"}
+                                  </td>
+                                  <td className="p-4 text-gray-400">
+                                    Level {item.level}
+                                  </td>
+                                </>
                               )}
 
                               <td className="p-4">
                                 <span
-                                  className={`rounded-full border px-2 py-1 text-xs ${getStatusColor(item.status)}`}
+                                  className={`rounded-full border px-2 py-1 text-xs ${
+                                    walletHistoryModal === "deposit" || walletHistoryModal === "withdrawal"
+                                      ? getStatusColor(item.status)
+                                      : "text-green-400 bg-green-500/10 border-green-500/30"
+                                  }`}
                                 >
-                                  {item.status}
+                                  {walletHistoryModal === "deposit" || walletHistoryModal === "withdrawal"
+                                    ? item.status
+                                    : "received"}
                                 </span>
                               </td>
                             </tr>

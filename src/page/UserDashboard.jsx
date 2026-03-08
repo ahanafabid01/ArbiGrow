@@ -34,7 +34,6 @@ import Logo from "../assets/Arbigrow-Logo.png";
 import {
   mockMarketPrices,
   mockUserData,
-  generateMockTransactions,
 } from "../constants/mockdata.js";
 import { useNavigate } from "react-router-dom";
 import ReferralPage from "../component/user/ReferralPage.jsx";
@@ -43,7 +42,13 @@ import OverviewPage from "../component/user/OverviewPage.jsx";
 import useUserStore from "../store/userStore.js";
 import { LogOut } from "lucide-react";
 import TransactionHistoryPage from "../component/user/TransactionHistoryPage.jsx";
-import { getReferralNetwork } from "../api/user.api.js";
+import {
+  getReferralNetwork,
+  getMyDeposits,
+  getMyWithdrawals,
+  getMyEarningsHistory,
+  getMyProfitHistory,
+} from "../api/user.api.js";
 import DepositPage from "../component/user/DepositUSDT.jsx";
 import WithdrawPage from "../component/user/WithdrawUSDT.jsx";
 import TierSection from "../component/package/TierSection.jsx";
@@ -69,7 +74,9 @@ export function UserDashboard() {
   const [showCoinRain, setShowCoinRain] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [transactionFilter, setTransactionFilter] = useState("All");
-  const [transactions] = useState(generateMockTransactions());
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsLoaded, setTransactionsLoaded] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
   const [referralLevels, setReferralLevels] = useState(EMPTY_REFERRAL_LEVELS);
@@ -148,6 +155,97 @@ export function UserDashboard() {
     navigate("/login");
   };
 
+  // ── Transaction helpers ──────────────────────────────────────
+  const _fmtAmount = (val) => parseFloat(val || 0).toFixed(2);
+  const _fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString() : "-");
+  const _fmtWallet = (key) =>
+    (key || "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const _mapStatus = (s) => {
+    const v = (s || "").toLowerCase();
+    if (v === "approved" || v === "completed") return "Completed";
+    if (v === "rejected" || v === "failed") return "Rejected";
+    if (v === "processing") return "Processing";
+    return "Pending";
+  };
+  const _normalizeTransactions = (deps, wdws, ears, pfts) => {
+    const rows = [];
+    deps.forEach((d) =>
+      rows.push({
+        id: `dep_${d.id}`,
+        date: _fmtDate(d.created_at),
+        type: "Deposit",
+        wallet: "Deposit Wallet",
+        amount: _fmtAmount(d.amount),
+        currency: "USDT",
+        status: _mapStatus(d.status),
+        _ts: new Date(d.created_at).getTime(),
+      })
+    );
+    wdws.forEach((w) =>
+      rows.push({
+        id: `wdw_${w.id}`,
+        date: _fmtDate(w.created_at),
+        type: "Withdrawal",
+        wallet: _fmtWallet(w.source_wallet),
+        amount: _fmtAmount(w.amount),
+        currency: "USDT",
+        status: _mapStatus(w.status),
+        _ts: new Date(w.created_at).getTime(),
+      })
+    );
+    ears.forEach((e) =>
+      rows.push({
+        id: `ear_${e.id}`,
+        date: _fmtDate(e.created_at),
+        type: e.wallet_type === "referral" ? "Referral Bonus" : "Generation Bonus",
+        wallet: e.wallet_type === "referral" ? "Referral Wallet" : "Generation Wallet",
+        amount: _fmtAmount(e.amount),
+        currency: "USDT",
+        status: "Completed",
+        _ts: new Date(e.created_at).getTime(),
+      })
+    );
+    pfts.forEach((p) =>
+      rows.push({
+        id: `pft_${p.id}`,
+        date: _fmtDate(p.created_at),
+        type: "Profit Credit",
+        wallet: "Main Wallet",
+        amount: _fmtAmount(p.amount),
+        currency: "USDT",
+        status: "Completed",
+        _ts: new Date(p.created_at).getTime(),
+      })
+    );
+    return rows.sort((a, b) => b._ts - a._ts);
+  };
+
+  useEffect(() => {
+    if (activePage !== "transactions" || transactionsLoaded) return;
+    const load = async () => {
+      setTransactionsLoading(true);
+      try {
+        const [depRes, wdwRes, earRes, pftRes] = await Promise.all([
+          getMyDeposits(),
+          getMyWithdrawals(),
+          getMyEarningsHistory(),
+          getMyProfitHistory(),
+        ]);
+        const deps = depRes?.data?.data || [];
+        const wdws = wdwRes?.data?.data || [];
+        const ears = earRes?.data?.data || [];
+        const pfts = pftRes?.data?.data || [];
+        setTransactions(_normalizeTransactions(deps, wdws, ears, pfts));
+        setTransactionsLoaded(true);
+      } catch (err) {
+        console.error("Failed to load transactions:", err);
+      } finally {
+        setTransactionsLoading(false);
+      }
+    };
+    load();
+  }, [activePage, transactionsLoaded]);
+
   const userPages = [
     {
       id: "overview",
@@ -184,7 +282,6 @@ export function UserDashboard() {
       label: "Transactions",
       icon: FileText,
       description: "Transaction history",
-      comingSoon: true,
     },
     {
       id: "referral",
@@ -197,7 +294,6 @@ export function UserDashboard() {
       label: "Market",
       icon: TrendingUp,
       description: "Crypto market overview",
-      comingSoon: true,
     },
     {
       id: "profile",
@@ -231,6 +327,8 @@ export function UserDashboard() {
         return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
       case "Processing":
         return "text-blue-400 bg-blue-500/10 border-blue-500/30";
+      case "Rejected":
+        return "text-red-400 bg-red-500/10 border-red-500/30";
       default:
         return "text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
@@ -322,6 +420,7 @@ export function UserDashboard() {
           startIndex={startIndex}
           endIndex={endIndex}
           getStatusColor={getStatusColor}
+          isLoading={transactionsLoading}
         />
       );
     }

@@ -186,6 +186,11 @@ export const applyRoiByPackage = async (token, packageName, percentage) => {
   return res.data || {};
 };
 
+export const getScheduledRoi = async (token) => {
+  const res = await api.get("v1/admin/roi/scheduled", authHeaders(token));
+  return res.data || {};
+};
+
 export const getAdminInvestments = async (
   token,
   { page = 1, statusFilter = "", search = "" } = {},

@@ -92,8 +92,8 @@ export default function TierSection({ onSelect }) {
 
                     {/* Package Name */}
                     <div className="mb-4">
-                      <p className="mb-1 text-xs text-gray-400">
-                        PACKAGE
+                      <p className="mb-1 text-xs text-gray-400 tracking-widest">
+                        STRATEGY ACCESS LEVEL
                       </p>
                       <h3 className="text-xl font-semibold text-white">
                         {pkg.name}
@@ -114,7 +114,7 @@ export default function TierSection({ onSelect }) {
                     <div className="flex items-center justify-between">
                       <div className="rounded-md bg-cyan-500/10 px-3 py-1">
                         <p className="text-xs font-medium text-cyan-300">
-                          ROI {pkg.roi.min}% - {pkg.roi.max}%
+                          {pkg.rank}
                         </p>
                       </div>
 

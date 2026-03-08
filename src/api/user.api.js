@@ -75,3 +75,11 @@ export const getMyInvestments = () => {
 export const getMyInvestmentDetails = (investmentId) => {
   return api.get(`v1/investments/${investmentId}`, authHeaders());
 };
+
+export const getMyEarningsHistory = () => {
+  return api.get("v1/user/earnings-history", authHeaders());
+};
+
+export const getMyProfitHistory = () => {
+  return api.get("v1/user/profit-history", authHeaders());
+};

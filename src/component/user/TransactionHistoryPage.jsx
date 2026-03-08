@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 const TransactionHistoryPage = ({
   currentTransactions,
@@ -12,6 +12,7 @@ const TransactionHistoryPage = ({
   startIndex,
   endIndex,
   getStatusColor,
+  isLoading,
 }) => {
   return (
     <motion.div
@@ -75,7 +76,21 @@ const TransactionHistoryPage = ({
               </tr>
             </thead>
             <tbody>
-              {currentTransactions.map((transaction) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
+                    <p className="text-gray-400 text-sm">Loading transactions...</p>
+                  </td>
+                </tr>
+              ) : currentTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center text-gray-500 text-sm">
+                    No transactions found.
+                  </td>
+                </tr>
+              ) : (
+              currentTransactions.map((transaction) => (
                 <tr
                   key={transaction.id}
                   className="border-b border-white/5 hover:bg-white/5 transition-colors"
@@ -109,7 +124,8 @@ const TransactionHistoryPage = ({
                     </span>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>
@@ -117,9 +133,11 @@ const TransactionHistoryPage = ({
         {/* Pagination */}
         <div className="p-4 border-t border-white/10 flex items-center justify-between">
           <div className="text-sm text-gray-400">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(endIndex, filteredTransactions.length)} of{" "}
-            {filteredTransactions.length} transactions
+            {isLoading
+              ? "Loading..."
+              : filteredTransactions.length === 0
+              ? "No transactions"
+              : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTransactions.length)} of ${filteredTransactions.length} transactions`}
           </div>
           <div className="flex items-center gap-2">
             <button
