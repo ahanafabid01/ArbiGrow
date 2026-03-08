@@ -10,6 +10,7 @@ export function InvestmentsTable({ investments, onViewDetails }) {
             <tr className="border-b border-white/10">
               <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">User</th>
               <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Package</th>
+              <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Category</th>
               <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</th>
               <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Start Date</th>
               <th className="px-4 md:px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Expected Profit</th>
@@ -22,7 +23,7 @@ export function InvestmentsTable({ investments, onViewDetails }) {
           <tbody className="divide-y divide-white/5">
             {investments.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
+                <td colSpan={9} className="px-6 py-8 text-center text-gray-400">
                   No investments found
                 </td>
               </tr>
@@ -45,6 +46,12 @@ export function InvestmentsTable({ investments, onViewDetails }) {
                   <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-cyan-400 font-semibold">
                       {investment.packageName}
+                    </span>
+                  </td>
+
+                  <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-purple-400 font-semibold">
+                      {investment.tierName}
                     </span>
                   </td>
 

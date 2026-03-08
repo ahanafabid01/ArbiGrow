@@ -32,6 +32,7 @@ const mapListItem = (item) => ({
   userName: item.username || "-",
   userEmail: item.email || "-",
   packageName: item.package_name,
+  tierName: item.tier_name || "—",
   amount: toNumber(item.invested_amount),
   startDate: formatDate(item.start_date),
   endDate: formatDate(item.end_date),
@@ -169,17 +170,10 @@ export function InvestmentsManagement() {
 
     const parsedPercentage = Number(profitPercentage);
     const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
-    const maxAllowedPercentage = Math.min(5, Math.max(0, remainingPercentage));
-    const minAllowedPercentage =
-      remainingPercentage >= 1 ? 1 : Math.min(Math.max(0, remainingPercentage), 0.01);
 
     if (!parsedPercentage || parsedPercentage <= 0) return;
-    if (parsedPercentage < minAllowedPercentage) {
-      alert(`Minimum allowed now is ${minAllowedPercentage.toFixed(2)}%.`);
-      return;
-    }
-    if (parsedPercentage > maxAllowedPercentage) {
-      alert(`Only up to ${maxAllowedPercentage.toFixed(2)}% can be added now.`);
+    if (parsedPercentage > remainingPercentage) {
+      alert(`Only ${remainingPercentage.toFixed(2)}% remaining.`);
       return;
     }
 
@@ -232,14 +226,7 @@ export function InvestmentsManagement() {
     const numericValue = Number(value);
     if (Number.isNaN(numericValue) || numericValue < 0) return;
 
-    const remainingPercentage = Number(selectedInvestment?.remainingPercentage ?? 0);
-    const maxAllowedPercentage = Math.min(5, Math.max(0, remainingPercentage));
-    const cappedValue = Math.min(
-      numericValue,
-      maxAllowedPercentage,
-    );
-
-    setProfitPercentage(String(cappedValue));
+    setProfitPercentage(String(numericValue));
   };
 
   return (

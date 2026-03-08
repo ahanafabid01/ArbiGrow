@@ -163,11 +163,7 @@ export function AddProfitModal({
                   </p>
                 )}
 
-                {percentageValue > 5 && (
-                  <p className="text-red-400 text-xs mt-2">
-                    Warning: percentage cannot exceed 5%
-                  </p>
-                )}
+
               </div>
             )}
 
@@ -187,7 +183,6 @@ export function AddProfitModal({
                   loading ||
                   !percentageValue ||
                   percentageValue < minAllowedPercentage ||
-                  percentageValue > 5 ||
                   percentageValue > remainingPercentage ||
                   calculatedProfit > remainingProfit
                 }

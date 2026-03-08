@@ -24,10 +24,35 @@ const PAIRS = [
   { pair: "ETCUSDT",  symbol: "ETC",  name: "Ethereum Classic" },
   { pair: "MATICUSDT",symbol: "MATIC",name: "Polygon" },
   { pair: "SANDUSDT", symbol: "SAND", name: "The Sandbox" },
+  { pair: "ARBUSDT",  symbol: "ARB",  name: "Arbitrum" },
 ];
 
-const ICON_URL = (symbol) =>
-  `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1f63a47d927ada4c25e2dbd07f93c5a4e9f8e4a/128/color/${symbol.toLowerCase()}.png`;
+// CoinGecko CDN — reliable hotlinking for all coins
+const COIN_ICONS = {
+  BTC:  "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png",
+  ETH:  "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png",
+  BNB:  "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  SOL:  "https://coin-images.coingecko.com/coins/images/4128/large/solana.png",
+  XRP:  "https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png",
+  DOGE: "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png",
+  ADA:  "https://coin-images.coingecko.com/coins/images/975/large/cardano.png",
+  AVAX: "https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png",
+  DOT:  "https://coin-images.coingecko.com/coins/images/12171/large/polkadot.png",
+  LINK: "https://coin-images.coingecko.com/coins/images/877/large/chainlink-new-logo.png",
+  LTC:  "https://coin-images.coingecko.com/coins/images/2/large/litecoin.png",
+  UNI:  "https://coin-images.coingecko.com/coins/images/12504/large/uniswap-uni.png",
+  ATOM: "https://coin-images.coingecko.com/coins/images/1481/large/cosmos_hub.png",
+  TRX:  "https://coin-images.coingecko.com/coins/images/1094/large/tron-logo.png",
+  XLM:  "https://coin-images.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png",
+  NEAR: "https://coin-images.coingecko.com/coins/images/10365/large/near.jpg",
+  ALGO: "https://coin-images.coingecko.com/coins/images/4030/large/algorand.png",
+  ETC:  "https://coin-images.coingecko.com/coins/images/453/large/ethereum-classic-logo.png",
+  MATIC:"https://coin-images.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+  SAND: "https://coin-images.coingecko.com/coins/images/12129/large/sandbox_logo.jpg",
+  ARB:  "https://coin-images.coingecko.com/coins/images/16547/large/Token_ARB.png",
+};
+
+const getCoinIcon = (symbol) => COIN_ICONS[symbol] ?? "";
 
 const pairMeta = Object.fromEntries(PAIRS.map((p) => [p.pair, p]));
 
@@ -46,7 +71,7 @@ const mapTicker = (t) => {
     id: meta.pair,
     symbol: meta.symbol,
     name: meta.name,
-    image: ICON_URL(meta.symbol),
+    image: getCoinIcon(meta.symbol),
     price: parseFloat(t.c ?? t.lastPrice ?? 0),
     change24h: parseFloat(t.P ?? t.priceChangePercent ?? 0),
     volume: parseFloat(t.q ?? t.quoteVolume ?? 0),
