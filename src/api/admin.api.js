@@ -168,6 +168,24 @@ export const applyAdminRoiToAll = async (token) => {
   return res.data || {};
 };
 
+export const applyRoiByTier = async (token, tierName, percentage) => {
+  const res = await api.post(
+    "v1/admin/roi/apply-by-tier",
+    { tier_name: tierName, percentage },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const applyRoiByPackage = async (token, packageName, percentage) => {
+  const res = await api.post(
+    "v1/admin/roi/apply-by-package",
+    { package_name: packageName, percentage },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
 export const getAdminInvestments = async (
   token,
   { page = 1, statusFilter = "", search = "" } = {},

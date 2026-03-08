@@ -35,9 +35,8 @@ export function AddProfitModal({
       ? toNumber(investment.remainingPercentage)
       : roi - percentagePaid,
   );
-  const maxAllowedPercentage = Math.min(5, remainingPercentage);
-  const minAllowedPercentage =
-    remainingPercentage >= 1 ? 1 : Math.min(remainingPercentage, 0.01);
+  const maxAllowedPercentage = remainingPercentage;
+  const minAllowedPercentage = Math.min(remainingPercentage, 0.01);
   const MotionDiv = motion.div;
 
   return (
@@ -126,8 +125,7 @@ export function AddProfitModal({
                   const parsedValue = Number(nextValue);
                   if (Number.isNaN(parsedValue)) return;
 
-                  const cappedValue = Math.min(parsedValue, maxAllowedPercentage);
-                  onPercentageChange(String(cappedValue));
+                  onPercentageChange(String(parsedValue));
                 }}
                 placeholder="Enter percentage..."
                 min={minAllowedPercentage}
@@ -137,7 +135,7 @@ export function AddProfitModal({
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Allowed per entry: {minAllowedPercentage.toFixed(2)}% - {maxAllowedPercentage.toFixed(2)}%
+                Max allowed: {maxAllowedPercentage.toFixed(2)}% (remaining percentage)
               </p>
             </div>
 

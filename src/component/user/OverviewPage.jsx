@@ -388,7 +388,7 @@ const OverviewPage = (
                 <wallet.icon className="w-5 h-5 text-cyan-400" />
               </div>
               <div className="flex items-center gap-2">
-                {wallet.currency === "ARBX" && isMiningActive && (
+                {wallet.currency === "ARBX" && isTimerRunning && (
                   <span
                     className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-[10px] font-semibold text-yellow-300"
                     title="Mining is active"

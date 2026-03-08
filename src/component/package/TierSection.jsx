@@ -7,7 +7,7 @@ export default function TierSection({ onSelect }) {
     <section className="px-6 pb-20">
       <div className="mx-auto max-w-7xl space-y-16">
         {tierGroups.map((tier, tierIndex) => (
-          <div key={`${tier.name}-${tier.id}`}>
+          <div key={tier.name}>
             {/* Tier Header */}
             <div className="mb-8">
               <div className="mb-3 flex items-center gap-3">
@@ -16,6 +16,9 @@ export default function TierSection({ onSelect }) {
                 </h2>
                 <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-sm text-cyan-300">
                   {tier.range}
+                </span>
+                <span className="rounded-full bg-green-500/10 px-3 py-1 text-sm text-green-300">
+                  ROI {tier.roiText}
                 </span>
               </div>
               <p className="text-gray-400">{tier.description}</p>
@@ -90,7 +93,7 @@ export default function TierSection({ onSelect }) {
                     {/* Package Name */}
                     <div className="mb-4">
                       <p className="mb-1 text-xs text-gray-400">
-                        STRATEGY ACCESS LEVEL
+                        PACKAGE
                       </p>
                       <h3 className="text-xl font-semibold text-white">
                         {pkg.name}
@@ -111,7 +114,7 @@ export default function TierSection({ onSelect }) {
                     <div className="flex items-center justify-between">
                       <div className="rounded-md bg-cyan-500/10 px-3 py-1">
                         <p className="text-xs font-medium text-cyan-300">
-                          {pkg.accessLevel}
+                          ROI {pkg.roi.min}% - {pkg.roi.max}%
                         </p>
                       </div>
 

@@ -26,8 +26,6 @@ export default function PackageModal({
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const [minimumAllowedAmount, setMinimumAllowedAmount] = useState(0);
 
-  const MIN_DAILY_ROI = 1;
-  const MAX_DAILY_ROI = 5;
   const TOTAL_ROI_LIMIT = 150;
 
   useEffect(() => {
@@ -73,8 +71,10 @@ export default function PackageModal({
 
   if (!selectedPackage) return null;
 
-  const minDailyProfit = (selectedPackage.amount * MIN_DAILY_ROI) / 100;
-  const maxDailyProfit = (selectedPackage.amount * MAX_DAILY_ROI) / 100;
+  const minDailyRoi = Number(selectedPackage?.roi?.min ?? 1);
+  const maxDailyRoi = Number(selectedPackage?.roi?.max ?? 5);
+  const minDailyProfit = (selectedPackage.amount * minDailyRoi) / 100;
+  const maxDailyProfit = (selectedPackage.amount * maxDailyRoi) / 100;
   const totalProfit = (selectedPackage.amount * TOTAL_ROI_LIMIT) / 100;
   const totalReturn = totalProfit;
   const isLowerPackage =
@@ -201,7 +201,7 @@ export default function PackageModal({
                   <div>
                     <p className="text-gray-400">ROI</p>
                     <p className="font-semibold text-green-400">
-                      {MIN_DAILY_ROI}% - {MAX_DAILY_ROI}% Daily
+                      {minDailyRoi}% - {maxDailyRoi}% Daily
                     </p>
                   </div>
 
