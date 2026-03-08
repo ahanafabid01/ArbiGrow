@@ -44,9 +44,10 @@ const Home = () => {
       <ExecutiveSummary />
       <SecurityCompliance />
       {/* <TradingAnalytics /> */}
+      {stats && <PlatformStatistics stats={stats} />}
       <WhyChooseUs />
       <MemberBenefits />
-      {stats && <PlatformStatistics stats={stats} />}
+      
       <div id="architecture">
         <TechnicalArchitecture />
       </div>

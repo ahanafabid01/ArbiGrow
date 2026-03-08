@@ -69,8 +69,8 @@ export default function AdminLayout({
   label: "Platform Statistics",
   icon: Activity,
   description: "Update statistics",
-},
-    {
+  },
+  {
       id: "roi",
       label: "ROI Management",
       icon: Percent,
@@ -185,6 +185,8 @@ export default function AdminLayout({
           </nav>
 
           <div className="p-4 border-t border-white/10 space-y-3">
+           {/*  */}
+           
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 transition-all duration-300"

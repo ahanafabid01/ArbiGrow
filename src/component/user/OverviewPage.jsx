@@ -8,6 +8,8 @@ import {
   Users,
   TrendingUp,
   Pickaxe,
+  User,
+  MessageCircle,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
 import { useCallback, useEffect, useState } from "react";
@@ -19,9 +21,11 @@ import {
   claimMining,
   getMyEarningsHistory,
 } from "../../api/user.api.js";
+import { QuickShortcuts } from "./overview/QuickShortcuts.jsx";
+import { StatisticsTicker } from "./overview/StatisticsTicker.jsx";
+import { getPlatformStats } from "../../api/admin.api.js";
 
-const OverviewPage = (
-) => {
+const OverviewPage = ({ setActivePage }) => {
   const MINING_CYCLE_MS = 24 * 60 * 60 * 1000;
   const { user, setUser, logout } = useUserStore();
   const [isTokenInfoOpen, setIsTokenInfoOpen] = useState(false);
@@ -247,7 +251,76 @@ const OverviewPage = (
       setWalletHistoryModal("generation");
     }
   };
+const shortcuts = [
+  {
+    id: "deposit",
+    label: "Deposit",
+    icon: Download,
+    onClick: () => setActivePage("deposit"),
+  },
+  {
+    id: "packages",
+    label: "Packages",
+    icon: Coins,
+    onClick: () => setActivePage("packages"),
+  },
+  {
+    id: "investments",
+    label: "My Investments",
+    icon: Wallet,
+    onClick: () => setActivePage("investments"),
+  },
+  {
+    id: "withdraw",
+    label: "Withdraw",
+    icon: Upload,
+    onClick: () => setActivePage("withdraw"),
+  },
+  {
+    id: "market",
+    label: "Market",
+    icon: TrendingUp,
+    onClick: () => setActivePage("market"),
+  },
+  {
+    id: "referral",
+    label: "Referral",
+    icon: Users,
+    onClick: () => setActivePage("referral"),
+  },
 
+  // NEW
+  {
+    id: "profile",
+    label: "Profile",
+    icon: User,
+    onClick: () => setActivePage("profile"),
+  },
+  {
+    id: "support",
+    label: "Support",
+    icon: MessageCircle,
+    onClick: () => window.open("https://t.me/ArbigrowOfficial", "_blank"),
+  },
+];
+
+ 
+
+// Api 
+const [stats, setStats] = useState(null);
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const data = await getPlatformStats();
+      console.log("DAta",data)
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to load platform stats", error);
+    }
+  };
+
+  fetchStats();
+}, []);
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Market Prices Bar */}
@@ -337,6 +410,11 @@ const OverviewPage = (
           Here's your wallet overview and recent activities
         </p>
       </div>
+         {/* Quick Shortcuts */}
+    <QuickShortcuts shortcuts={shortcuts} />
+
+    {/* Statistics Ticker */}
+    {stats && <StatisticsTicker stats={stats} />}
 
       {/* USDT Wallet Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -27,6 +27,7 @@ import {
   GitBranch,
   Star,
   Award,
+  MessageCircle,
 } from "lucide-react";
 import arbxCardImg from "../assets/Card-design.png";
 import arbxCoinImg from "../assets/Coin.png";
@@ -492,6 +493,7 @@ export function UserDashboard() {
           endIndex={endIndex}
           filteredTransactions={filteredTransactions}
           getStatusColor={getStatusColor}
+          setActivePage={setActivePage}
         />
       );
     }
@@ -669,6 +671,22 @@ export function UserDashboard() {
           {/* Collapse Button */}
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-white/10 space-y-3">
+               <div className="mb-3">
+    <a
+      href="https://t.me/ArbigrowOfficial"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block"
+    >
+      <button className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+        <MessageCircle className="w-5 h-5 text-cyan-400" />
+        <span className="text-sm text-gray-300">
+          Chat with us. <span className="text-green-400">We are online!</span>
+        </span>
+      </button>
+    </a>
+  </div>
+
             {/* Logout Button */}
             <button
               onClick={handleLogout}
