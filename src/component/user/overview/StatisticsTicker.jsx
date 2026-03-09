@@ -71,7 +71,7 @@ export function StatisticsTicker({ stats }) {
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: isMobile ? 15 : 20,
+              duration: isMobile ? 40 : 40,
               ease: "linear",
             },
           }}
