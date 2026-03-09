@@ -19,9 +19,9 @@ export function MarketHeader({ lastUpdated, onRefresh, loading, wsStatus }) {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border border-blue-500/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
             <TrendingUp className="w-5 h-5 text-cyan-400" />
           </div>
           <div>
