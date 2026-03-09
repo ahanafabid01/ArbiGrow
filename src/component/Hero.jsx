@@ -82,23 +82,21 @@ export const Hero = () => {
         </motion.div>
 
         {/* Main Headline */}
-<motion.h1
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8, delay: 0.2 }}
-  className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 leading-snug sm:leading-tight text-white px-4 text-center"
->
-  Modern Digital Earning
-  <br className="hidden sm:block" />
-  
-  <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-    Platform Powered
-  </span>
-
-  <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-    by AI
-  </span>
-</motion.h1>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 leading-snug sm:leading-tight text-white px-4 text-center"
+        >
+          Modern Digital Earning
+          <br className="hidden sm:block" />
+          <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            Platform Powered
+          </span>
+          <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            by AI
+          </span>
+        </motion.h1>
 
         {/* Subheadline */}
         <motion.p
@@ -165,7 +163,7 @@ export const Hero = () => {
             variant="frosted"
             fullWidth={false}
             className="px-6 py-3"
-            onClick={() => window.open("/whitepaper.pdf", "_blank")}
+            onClick={() => window.open("/technical-whitepaper.pdf", "_blank")}
           >
             Read Technical Whitepaper
           </Button>
