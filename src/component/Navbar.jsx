@@ -286,6 +286,62 @@ export default function Navbar() {
                   </button>
                 </div>
 
+                {/* Mobile Action Buttons */}
+                {!isLoggedIn ? (
+                  <div className="flex flex-col gap-2 mb-6">
+                    <Button
+                      variant="frosted"
+                      icon={<LogIn />}
+                      onClick={() => navigate("/login")}
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      variant="frosted"
+                      icon={<UserPlus />}
+                      onClick={() => navigate("/register")}
+                    >
+                      Register
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 mb-6">
+                    {/* User Dashboard */}
+                    <Button
+                      variant="frosted"
+                      icon={<LayoutDashboard />}
+                      onClick={() => {
+                        navigate("/dashboard");
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                    {/* Admin only Button */}
+                    {is_admin && (
+                      <Button
+                        variant="frosted"
+                        icon={<Shield />}
+                        onClick={() => {
+                          navigate("/admin-dashboard");
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        Admin
+                      </Button>
+                    )}
+                    <Button
+                      variant="gradient"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      Logout
+                    </Button>
+                  </div>
+                )}
+
                 {/* Mobile Navigation */}
                 <div className="space-y-1 mb-6">
                   {navLinks.map((link, idx) => (
@@ -447,62 +503,6 @@ export default function Navbar() {
 
 </div>
 </div>
-                 
-                {/* Mobile Action Buttons */}
-                {!isLoggedIn ? (
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      variant="frosted"
-                      icon={<LogIn />}
-                      onClick={() => navigate("/login")}
-                    >
-                      Login
-                    </Button>
-                    <Button
-                      variant="frosted"
-                      icon={<UserPlus />}
-                      onClick={() => navigate("/register")}
-                    >
-                      Register
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {/* User Dashboard */}
-                    <Button
-                      variant="frosted"
-                      icon={<LayoutDashboard />}
-                      onClick={() => {
-                        navigate("/dashboard");
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      Dashboard
-                    </Button>
-                    {/* Admin only Button */}
-                    {is_admin && (
-                      <Button
-                        variant="frosted"
-                        icon={<Shield />}
-                        onClick={() => {
-                          navigate("/admin-dashboard");
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        Admin
-                      </Button>
-                    )}
-                    <Button
-                      variant="gradient"
-                      onClick={() => {
-                        handleLogout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                    >
-                      Logout
-                    </Button>
-                  </div>
-                )}
               </div>
             </motion.div>
           </>
