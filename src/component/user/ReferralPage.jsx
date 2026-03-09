@@ -100,7 +100,7 @@ const ReferralPage = ({
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1 px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs break-all">
             {import.meta.env.VITE_FRONTNED_URL}/register?ref_code=
-            {user?.referral_code || ""}
+            {user?.username || ""}
           </div>
           <button
             onClick={handleCopyLink}

@@ -55,7 +55,8 @@ export function StatisticsTicker({ stats }) {
     },
   ];
 
-  const duplicatedStats = [...statsArray, ...statsArray];
+  // const duplicatedStats = [...statsArray, ...statsArray];
+  const duplicatedStats = Array(4).fill(statsArray).flat();
 
   return (
     <div className="relative rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 overflow-hidden">
@@ -64,13 +65,13 @@ export function StatisticsTicker({ stats }) {
 
       <div className="overflow-hidden py-4">
         <motion.div
-          className="flex gap-4 md:gap-8"
+          className="flex gap-4 md:gap-8 w-max"
           animate={{ x: [0, "-50%"] }}
           transition={{
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: isMobile ? 20 : 30,
+              duration: isMobile ? 15 : 20,
               ease: "linear",
             },
           }}
@@ -78,7 +79,7 @@ export function StatisticsTicker({ stats }) {
           {duplicatedStats.map((stat, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-3 whitespace-nowrap px-4"
+              className="flex items-center gap-3 whitespace-nowrap"
             >
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-600/20 flex items-center justify-center flex-shrink-0">
                 <stat.icon className={`w-4 h-4 ${stat.color}`} />

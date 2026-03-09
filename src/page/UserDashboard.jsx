@@ -32,10 +32,7 @@ import {
 import arbxCardImg from "../assets/Card-design.png";
 import arbxCoinImg from "../assets/Coin.png";
 import Logo from "../assets/Arbigrow-Logo.png";
-import {
-  mockMarketPrices,
-  mockUserData,
-} from "../constants/mockdata.js";
+import { mockMarketPrices, mockUserData } from "../constants/mockdata.js";
 import { useNavigate } from "react-router-dom";
 import ReferralPage from "../component/user/ReferralPage.jsx";
 import ProfilePage from "../component/user/ProfilePage.jsx";
@@ -160,7 +157,10 @@ export function UserDashboard() {
   const _fmtAmount = (val) => parseFloat(val || 0).toFixed(2);
   const _fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString() : "-");
   const _fmtWallet = (key) =>
-    (key || "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    (key || "")
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
   const _mapStatus = (s) => {
     const v = (s || "").toLowerCase();
     if (v === "approved" || v === "completed") return "Completed";
@@ -180,7 +180,7 @@ export function UserDashboard() {
         currency: "USDT",
         status: _mapStatus(d.status),
         _ts: new Date(d.created_at).getTime(),
-      })
+      }),
     );
     wdws.forEach((w) =>
       rows.push({
@@ -192,19 +192,23 @@ export function UserDashboard() {
         currency: "USDT",
         status: _mapStatus(w.status),
         _ts: new Date(w.created_at).getTime(),
-      })
+      }),
     );
     ears.forEach((e) =>
       rows.push({
         id: `ear_${e.id}`,
         date: _fmtDate(e.created_at),
-        type: e.wallet_type === "referral" ? "Referral Bonus" : "Generation Bonus",
-        wallet: e.wallet_type === "referral" ? "Referral Wallet" : "Generation Wallet",
+        type:
+          e.wallet_type === "referral" ? "Referral Bonus" : "Generation Bonus",
+        wallet:
+          e.wallet_type === "referral"
+            ? "Referral Wallet"
+            : "Generation Wallet",
         amount: _fmtAmount(e.amount),
         currency: "USDT",
         status: "Completed",
         _ts: new Date(e.created_at).getTime(),
-      })
+      }),
     );
     pfts.forEach((p) =>
       rows.push({
@@ -216,7 +220,7 @@ export function UserDashboard() {
         currency: "USDT",
         status: "Completed",
         _ts: new Date(p.created_at).getTime(),
-      })
+      }),
     );
     return rows.sort((a, b) => b._ts - a._ts);
   };
@@ -336,7 +340,7 @@ export function UserDashboard() {
   };
 
   const handleCopyLink = () => {
-    const copiedLink = `${import.meta.env.VITE_FRONTNED_URL}/register?ref_code=${user.referral_code}`;
+    const copiedLink = `${import.meta.env.VITE_FRONTNED_URL}/register?ref_code=${user.username}`;
     navigator.clipboard.writeText(copiedLink);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -671,21 +675,22 @@ export function UserDashboard() {
           {/* Collapse Button */}
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-white/10 space-y-3">
-               <div className="mb-3">
-    <a
-      href="https://t.me/ArbigrowOfficial"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block"
-    >
-      <button className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
-        <MessageCircle className="w-5 h-5 text-cyan-400" />
-        <span className="text-sm text-gray-300">
-          Chat with us. <span className="text-green-400">We are online!</span>
-        </span>
-      </button>
-    </a>
-  </div>
+            <div className="mb-3">
+              <a
+                href="https://t.me/ArbigrowOfficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <button className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+                  <MessageCircle className="w-5 h-5 text-cyan-400" />
+                  <span className="text-sm text-gray-300">
+                    Chat with us.{" "}
+                    <span className="text-green-400">We are online!</span>
+                  </span>
+                </button>
+              </a>
+            </div>
 
             {/* Logout Button */}
             <button
