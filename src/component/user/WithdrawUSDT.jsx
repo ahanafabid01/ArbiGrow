@@ -7,6 +7,7 @@ import {
   getMyWithdrawals,
   refreshUserStore,
 } from "../../api/user.api.js";
+import StatusFeedbackModal from "../StatusFeedbackModal.jsx";
 
 const MIN_WITHDRAW_AMOUNT = 10;
 const MAIN_WALLET_BUFFER_RATE = 0.01;
@@ -49,6 +50,49 @@ const getErrorMessage = (error) =>
   error?.message ||
   "Something went wrong";
 
+const INITIAL_FIELD_ERRORS = {
+  wallet: "",
+  network: "",
+  amount: "",
+  destinationAddress: "",
+};
+
+const getApiFieldErrors = (error) => {
+  const details = error?.response?.data?.detail;
+  if (!Array.isArray(details)) return null;
+
+  const mapped = { ...INITIAL_FIELD_ERRORS };
+  let hasMappedError = false;
+
+  details.forEach((item) => {
+    const field = item?.loc?.[item.loc.length - 1];
+    const message = typeof item?.msg === "string" ? item.msg : "Invalid value";
+
+    switch (field) {
+      case "source_wallet":
+        mapped.wallet = message;
+        hasMappedError = true;
+        break;
+      case "network_name":
+        mapped.network = message;
+        hasMappedError = true;
+        break;
+      case "amount":
+        mapped.amount = message;
+        hasMappedError = true;
+        break;
+      case "destination_address":
+        mapped.destinationAddress = message;
+        hasMappedError = true;
+        break;
+      default:
+        break;
+    }
+  });
+
+  return hasMappedError ? mapped : null;
+};
+
 export default function WithdrawPage() {
   const user = useUserStore((state) => state.user);
   const setUser = useUserStore((state) => state.setUser);
@@ -60,9 +104,19 @@ export default function WithdrawPage() {
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
+  const [feedback, setFeedback] = useState(null);
   const [withdrawals, setWithdrawals] = useState([]);
+
+  useEffect(() => {
+    if (!feedback) return undefined;
+
+    const timer = setTimeout(() => {
+      setFeedback(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   const walletOptions = useMemo(
     () => [
@@ -144,7 +198,6 @@ export default function WithdrawPage() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        setErrorMessage("");
 
         const [userResponse, withdrawalsResponse, networksResponse] = await Promise.all([
           refreshUserStore(),
@@ -159,7 +212,10 @@ export default function WithdrawPage() {
         setWithdrawals(withdrawalsResponse?.data?.data || []);
         setNetworks(networksResponse?.data?.data || []);
       } catch (error) {
-        setErrorMessage(getErrorMessage(error));
+        setFeedback({
+          type: "error",
+          message: getErrorMessage(error),
+        });
         setWithdrawals([]);
         setNetworks([]);
       } finally {
@@ -172,58 +228,51 @@ export default function WithdrawPage() {
 
   const handleSubmitWithdraw = async (event) => {
     event.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (!selectedWallet) {
-      setErrorMessage("Please select a wallet.");
-      return;
-    }
-
-    if (!selectedNetwork) {
-      setErrorMessage("Please select a network.");
-      return;
-    }
-
-    if (Number.isNaN(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Please enter a valid amount.");
-      return;
-    }
-
-    if (amountNumber < MIN_WITHDRAW_AMOUNT) {
-      setErrorMessage(
-        `Minimum withdrawal amount is ${MIN_WITHDRAW_AMOUNT} USDT.`,
-      );
-      return;
-    }
-
-    if (amountNumber > selectedWallet.balance) {
-      setErrorMessage(
-        `Insufficient balance in ${selectedWallet.label}. Available: ${selectedWallet.balance.toFixed(7)}.`,
-      );
-      return;
-    }
-
-    if (!hasEnoughMainWalletBalance) {
-      setErrorMessage(
-        `Insufficient Main Wallet balance. Required: ${requiredMainWalletBalance.toFixed(7)} USDT (Amount + 1%), Available: ${mainWalletBalance.toFixed(7)} USDT.`,
-      );
-      return;
-    }
-
+    setFeedback(null);
+    const nextFieldErrors = { ...INITIAL_FIELD_ERRORS };
+    const normalizedAmount = amount.trim();
+    const parsedAmount = Number(normalizedAmount);
     const normalizedAddress = destinationAddress.trim();
+
+    if (!selectedWalletKey) {
+      nextFieldErrors.wallet = "Field required";
+    }
+
+    if (!selectedNetworkId) {
+      nextFieldErrors.network = "Field required";
+    }
+
+    if (!normalizedAmount) {
+      nextFieldErrors.amount = "Field required";
+    } else if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      nextFieldErrors.amount = "Please enter a valid amount.";
+    } else if (parsedAmount < MIN_WITHDRAW_AMOUNT) {
+      nextFieldErrors.amount = `Minimum withdrawal amount is ${MIN_WITHDRAW_AMOUNT} USDT.`;
+    } else if (selectedWallet && parsedAmount > selectedWallet.balance) {
+      nextFieldErrors.amount = `Insufficient balance in ${selectedWallet.label}. Available: ${selectedWallet.balance.toFixed(7)}.`;
+    } else if (!hasEnoughMainWalletBalance) {
+      nextFieldErrors.amount = `Insufficient Main Wallet balance. Required: ${requiredMainWalletBalance.toFixed(7)} USDT (Amount + 1%), Available: ${mainWalletBalance.toFixed(7)} USDT.`;
+    }
+
     if (!normalizedAddress) {
-      setErrorMessage("Please enter destination wallet address.");
+      nextFieldErrors.destinationAddress = "Field required";
+    } else if (normalizedAddress.length < 5) {
+      nextFieldErrors.destinationAddress = "Must be at least 5 characters.";
+    }
+
+    if (Object.values(nextFieldErrors).some(Boolean)) {
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
+    setFieldErrors(INITIAL_FIELD_ERRORS);
     setIsSubmitting(true);
 
     try {
       const response = await createWithdrawalRequest({
         source_wallet: selectedWallet.key,
         network_name: selectedNetwork.network_name,
-        amount: amount.trim(),
+        amount: normalizedAmount,
         destination_address: normalizedAddress,
         note: note.trim(),
       });
@@ -236,14 +285,25 @@ export default function WithdrawPage() {
         setWithdrawals(withdrawalsResponse?.data?.data || []);
       }
 
-      setSuccessMessage(
-        "Withdrawal request submitted. It is now pending admin review.",
-      );
+      setFeedback({
+        type: "success",
+        message: "Withdrawal request submitted. It is now pending admin review.",
+      });
+      setFieldErrors(INITIAL_FIELD_ERRORS);
       setAmount("");
       setDestinationAddress("");
       setNote("");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error));
+      const apiFieldErrors = getApiFieldErrors(error);
+      if (apiFieldErrors) {
+        setFieldErrors(apiFieldErrors);
+        return;
+      }
+
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(error),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -264,26 +324,19 @@ export default function WithdrawPage() {
         </p>
       </div>
 
-      {errorMessage && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {errorMessage}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-200">
-          {successMessage}
-        </div>
-      )}
-
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-xl">
         <h3 className="mb-4 text-lg font-semibold">Select Wallet</h3>
 
         <div className="relative">
           <select
             value={selectedWalletKey}
-            onChange={(event) => setSelectedWalletKey(event.target.value)}
-            className="w-full appearance-none rounded-xl border border-white/10 bg-[#0A122C] px-4 py-3 text-white"
+            onChange={(event) => {
+              setSelectedWalletKey(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, wallet: "" }));
+            }}
+            className={`w-full appearance-none rounded-xl border bg-[#0A122C] px-4 py-3 text-white ${
+              fieldErrors.wallet ? "border-red-500/60" : "border-white/10"
+            }`}
           >
             <option
               value=""
@@ -306,6 +359,9 @@ export default function WithdrawPage() {
 
           <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
+        {fieldErrors.wallet && (
+          <p className="mt-2 text-xs text-red-300">{fieldErrors.wallet}</p>
+        )}
 
         {selectedWallet && (
           <div className="mt-4 space-y-3">
@@ -333,9 +389,14 @@ export default function WithdrawPage() {
         <div className="relative">
           <select
             value={selectedNetworkId}
-            onChange={(event) => setSelectedNetworkId(event.target.value)}
+            onChange={(event) => {
+              setSelectedNetworkId(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, network: "" }));
+            }}
             disabled={isLoading || networks.length === 0}
-            className="w-full appearance-none rounded-xl border border-white/10 bg-[#0A122C] px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className={`w-full appearance-none rounded-xl border bg-[#0A122C] px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60 ${
+              fieldErrors.network ? "border-red-500/60" : "border-white/10"
+            }`}
           >
             <option
               value=""
@@ -356,6 +417,9 @@ export default function WithdrawPage() {
 
           <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
+        {fieldErrors.network && (
+          <p className="mt-2 text-xs text-red-300">{fieldErrors.network}</p>
+        )}
 
         {!isLoading && networks.length === 0 && (
           <p className="mt-3 text-sm text-yellow-300">
@@ -373,10 +437,18 @@ export default function WithdrawPage() {
             step="any"
             min={MIN_WITHDRAW_AMOUNT}
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            onChange={(event) => {
+              setAmount(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, amount: "" }));
+            }}
+            className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+              fieldErrors.amount ? "border-red-500/60" : "border-white/10"
+            }`}
             placeholder={`Amount (min ${MIN_WITHDRAW_AMOUNT} USDT)`}
           />
+          {fieldErrors.amount && (
+            <p className="-mt-2 text-xs text-red-300">{fieldErrors.amount}</p>
+          )}
 
           {amountNumber > 0 && (
             <div
@@ -399,10 +471,22 @@ export default function WithdrawPage() {
 
           <input
             value={destinationAddress}
-            onChange={(event) => setDestinationAddress(event.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            onChange={(event) => {
+              setDestinationAddress(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, destinationAddress: "" }));
+            }}
+            className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+              fieldErrors.destinationAddress
+                ? "border-red-500/60"
+                : "border-white/10"
+            }`}
             placeholder="Destination wallet address"
           />
+          {fieldErrors.destinationAddress && (
+            <p className="-mt-2 text-xs text-red-300">
+              {fieldErrors.destinationAddress}
+            </p>
+          )}
 
           <input
             value={note}
@@ -513,6 +597,8 @@ export default function WithdrawPage() {
           </table>
         </div>
       </div>
+
+      <StatusFeedbackModal feedback={feedback} onClose={() => setFeedback(null)} />
     </div>
   );
 }

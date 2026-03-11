@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "../component/admin/AdminLayout.jsx";
 import UserManagement from "../component/admin/UserManagement.jsx";
 import DashboardOverview from "../component/admin/DashboardOverview.jsx";
-import { getAllUsers } from "../api/admin.api.js";
 import useUserStore from "../store/userStore.js";
 import DepositRequests from "../component/admin/DepositRequests.jsx";
 import WithdrawalRequests from "../component/admin/WithdrawalRequests.jsx";
@@ -14,52 +13,18 @@ import { StatisticsManagement } from "../component/admin/statistics/StatisticsMa
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const token = useUserStore((state) => state.token);
   const logout = useUserStore((state) => state.logout);
 
   const [users, setUsers] = useState([]);
   const [activePage, setActivePage] = useState("dashboard");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const token = useUserStore.getState().token;
-      if (!token) {
-        setLoading(false);
-        logout();
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const resData = await getAllUsers(token);
-        if (resData?.status === 200) {
-          const usersArray = resData.data?.users || [];
-          setUsers(usersArray);
-        } else {
-          console.error(
-            "Failed to fetch users: ",
-            resData?.message || "Unknown error",
-          );
-        }
-      } catch (err) {
-        const status = err?.response?.status;
-        if (status === 401 || status === 403) {
-          logout();
-          navigate("/login");
-          return;
-        }
-        console.error("Failed to fetch users:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [logout, navigate]);
-
-  if (loading) {
-    return <div className="p-6 text-center">Loading...</div>;
-  }
+    if (!token) {
+      logout();
+      navigate("/login");
+    }
+  }, [token, logout, navigate]);
 
   const renderPageContent = () => {
     switch (activePage) {

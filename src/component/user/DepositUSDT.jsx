@@ -5,6 +5,7 @@ import {
   getActiveDepositNetworks,
   getMyDeposits,
 } from "../../api/user.api.js";
+import StatusFeedbackModal from "../StatusFeedbackModal.jsx";
 
 const getErrorMessage = (error) =>
   error?.response?.data?.detail ||
@@ -29,6 +30,44 @@ const formatAmount = (value) => {
   return amount % 1 === 0 ? String(amount) : amount.toFixed(2);
 };
 
+const INITIAL_FIELD_ERRORS = {
+  network: "",
+  amount: "",
+  txid: "",
+};
+
+const getApiFieldErrors = (error) => {
+  const details = error?.response?.data?.detail;
+  if (!Array.isArray(details)) return null;
+
+  const mapped = { ...INITIAL_FIELD_ERRORS };
+  let hasMappedError = false;
+
+  details.forEach((item) => {
+    const field = item?.loc?.[item.loc.length - 1];
+    const message = typeof item?.msg === "string" ? item.msg : "Invalid value";
+
+    switch (field) {
+      case "network_name":
+        mapped.network = message;
+        hasMappedError = true;
+        break;
+      case "amount":
+        mapped.amount = message;
+        hasMappedError = true;
+        break;
+      case "txid":
+        mapped.txid = message;
+        hasMappedError = true;
+        break;
+      default:
+        break;
+    }
+  });
+
+  return hasMappedError ? mapped : null;
+};
+
 export default function DepositPage() {
   const [networks, setNetworks] = useState([]);
   const [deposits, setDeposits] = useState([]);
@@ -39,14 +78,23 @@ export default function DepositPage() {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [amount, setAmount] = useState("");
   const [txid, setTxid] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState(INITIAL_FIELD_ERRORS);
+  const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    if (!feedback) return undefined;
+
+    const timer = setTimeout(() => {
+      setFeedback(null);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [feedback]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        setErrorMessage("");
 
         const [networksRes, depositsRes] = await Promise.all([
           getActiveDepositNetworks(),
@@ -56,7 +104,10 @@ export default function DepositPage() {
         setNetworks(networksRes?.data?.data || []);
         setDeposits(depositsRes?.data?.data || []);
       } catch (error) {
-        setErrorMessage(getErrorMessage(error));
+        setFeedback({
+          type: "error",
+          message: getErrorMessage(error),
+        });
       } finally {
         setIsLoading(false);
       }
@@ -105,27 +156,35 @@ export default function DepositPage() {
 
   const handleSubmitDeposit = async (event) => {
     event.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (!network) {
-      setErrorMessage("Please select a network.");
-      return;
-    }
+    setFeedback(null);
+    const nextFieldErrors = { ...INITIAL_FIELD_ERRORS };
 
     const normalizedAmount = amount.trim();
     const amountNumber = Number(normalizedAmount);
     const normalizedTxid = txid.trim();
 
-    if (!normalizedAmount || !normalizedTxid) {
-      setErrorMessage("Please fill all fields.");
+    if (!selectedNetworkId) {
+      nextFieldErrors.network = "Field required";
+    }
+
+    if (!normalizedAmount) {
+      nextFieldErrors.amount = "Field required";
+    } else if (Number.isNaN(amountNumber) || amountNumber <= 0) {
+      nextFieldErrors.amount = "Amount must be greater than 0.";
+    }
+
+    if (!normalizedTxid) {
+      nextFieldErrors.txid = "Field required";
+    } else if (normalizedTxid.length < 5) {
+      nextFieldErrors.txid = "Must be at least 5 characters.";
+    }
+
+    if (Object.values(nextFieldErrors).some(Boolean)) {
+      setFieldErrors(nextFieldErrors);
       return;
     }
 
-    if (Number.isNaN(amountNumber) || amountNumber <= 0) {
-      setErrorMessage("Amount must be greater than 0.");
-      return;
-    }
+    setFieldErrors(INITIAL_FIELD_ERRORS);
 
     try {
       setIsSubmitting(true);
@@ -144,11 +203,24 @@ export default function DepositPage() {
         setDeposits(depositsRes?.data?.data || []);
       }
 
-      setSuccessMessage("Deposit request submitted successfully.");
+      setFeedback({
+        type: "success",
+        message: "Deposit request submitted successfully.",
+      });
+      setFieldErrors(INITIAL_FIELD_ERRORS);
       setAmount("");
       setTxid("");
     } catch (error) {
-      setErrorMessage(getErrorMessage(error));
+      const apiFieldErrors = getApiFieldErrors(error);
+      if (apiFieldErrors) {
+        setFieldErrors(apiFieldErrors);
+        return;
+      }
+
+      setFeedback({
+        type: "error",
+        message: getErrorMessage(error),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -165,27 +237,20 @@ export default function DepositPage() {
         <p className="text-sm text-gray-400">Add funds to your account</p>
       </div>
 
-      {errorMessage && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {errorMessage}
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-200">
-          {successMessage}
-        </div>
-      )}
-
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 backdrop-blur-xl">
         <h3 className="mb-4 text-lg font-semibold">Select Network</h3>
 
         <div className="relative">
           <select
             value={selectedNetworkId}
-            onChange={(event) => setSelectedNetworkId(event.target.value)}
+            onChange={(event) => {
+              setSelectedNetworkId(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, network: "" }));
+            }}
             disabled={isLoading || networks.length === 0}
-            className="w-full appearance-none rounded-xl border border-white/10 bg-[#0A122C] px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className={`w-full appearance-none rounded-xl border bg-[#0A122C] px-4 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60 ${
+              fieldErrors.network ? "border-red-500/60" : "border-white/10"
+            }`}
           >
             <option
               value=""
@@ -206,6 +271,9 @@ export default function DepositPage() {
 
           <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
+        {fieldErrors.network && (
+          <p className="mt-2 text-xs text-red-300">{fieldErrors.network}</p>
+        )}
 
         {!isLoading && networks.length === 0 && (
           <p className="mt-3 text-sm text-yellow-300">
@@ -253,17 +321,33 @@ export default function DepositPage() {
             step="any"
             min="0"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            onChange={(event) => {
+              setAmount(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, amount: "" }));
+            }}
+            className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+              fieldErrors.amount ? "border-red-500/60" : "border-white/10"
+            }`}
             placeholder="Amount"
           />
+          {fieldErrors.amount && (
+            <p className="-mt-2 text-xs text-red-300">{fieldErrors.amount}</p>
+          )}
 
           <input
             value={txid}
-            onChange={(event) => setTxid(event.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            onChange={(event) => {
+              setTxid(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, txid: "" }));
+            }}
+            className={`w-full rounded-xl border bg-white/5 px-4 py-3 ${
+              fieldErrors.txid ? "border-red-500/60" : "border-white/10"
+            }`}
             placeholder="Transaction ID"
           />
+          {fieldErrors.txid && (
+            <p className="-mt-2 text-xs text-red-300">{fieldErrors.txid}</p>
+          )}
 
           <button
             type="submit"
@@ -354,6 +438,8 @@ export default function DepositPage() {
           </table>
         </div>
       </div>
+
+      <StatusFeedbackModal feedback={feedback} onClose={() => setFeedback(null)} />
     </div>
   );
 }

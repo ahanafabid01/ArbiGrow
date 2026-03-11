@@ -31,6 +31,15 @@ export default function UserDetailModal({
     selectedUser?.kyc?.front_image_url,
     selectedUser?.kyc?.back_image_url,
   ].filter(Boolean);
+  const normalizeStatus = (value) => {
+    const normalized = String(value || "pending").toLowerCase();
+    return ["pending", "approved", "rejected"].includes(normalized)
+      ? normalized
+      : "pending";
+  };
+  const currentUserStatus = normalizeStatus(
+    selectedUser?.kyc?.status || selectedUser?.status,
+  );
 
   return (
     <AnimatePresence>
@@ -257,7 +266,7 @@ export default function UserDetailModal({
                   <button
                     onClick={handleStatusChange}
                     disabled={
-                      userStatus === selectedUser?.kyc?.status ||
+                      normalizeStatus(userStatus) === currentUserStatus ||
                       isUpdating
                     }
                     className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import UserDetailModal from "./UserDetailModal.jsx";
 import useUserStore from "../../store/userStore.js";
@@ -21,6 +21,12 @@ const buildWalletForm = (wallets = {}) =>
     return acc;
   }, {});
 
+const VALID_STATUSES = new Set(["approved", "pending", "rejected"]);
+const normalizeStatus = (value) => {
+  const normalized = String(value || "pending").toLowerCase();
+  return VALID_STATUSES.has(normalized) ? normalized : "pending";
+};
+
 export default function UserManagement({ users, setUsers }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -36,11 +42,17 @@ export default function UserManagement({ users, setUsers }) {
   // NEW STATES FOR SERVER PAGINATION
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [statusCounts, setStatusCounts] = useState({
+    approved: 0,
+    pending: 0,
+    rejected: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [isBulkApproving, setIsBulkApproving] = useState(false);
   const [bulkUpdateMessage, setBulkUpdateMessage] = useState("");
+  const latestFetchIdRef = useRef(0);
 
-  const { userDetails, setUserDetails } = useUserStore();
+  const { setUserDetails } = useUserStore();
   
   const handleCloseModal = () => {
     setSelectedUser(null);
@@ -53,6 +65,7 @@ export default function UserManagement({ users, setUsers }) {
   const fetchUsers = useCallback(async () => {
     const token = useUserStore.getState().token;
     if (!token) return;
+    const fetchId = ++latestFetchIdRef.current;
 
     try {
       setLoading(true);
@@ -62,14 +75,33 @@ export default function UserManagement({ users, setUsers }) {
         search: searchQuery,
         status: statusFilter,
       });
+      const responseData = res?.data || {};
+      const responseUsers = responseData?.users || [];
+      const normalizedUsers = responseUsers.map((user) => ({
+        ...user,
+        status: normalizeStatus(user?.status),
+      }));
+      const pageLimit = Number(responseData?.limit || 50);
+      const backendCounts = responseData?.status_counts || {};
 
-      setUsers(res?.data?.users || []);
-      setTotalPages(Math.ceil((res?.data?.total || 0) / 50));
-      setTotalUsers(res?.data?.total || 0);
+      if (fetchId !== latestFetchIdRef.current) return;
+      setUsers(normalizedUsers);
+      setTotalPages(
+        Math.max(1, Math.ceil((Number(responseData?.total || 0) || 0) / pageLimit)),
+      );
+      setTotalUsers(Number(responseData?.total || 0) || 0);
+      setStatusCounts({
+        approved: Number(backendCounts?.approved || 0) || 0,
+        pending: Number(backendCounts?.pending || 0) || 0,
+        rejected: Number(backendCounts?.rejected || 0) || 0,
+      });
     } catch (err) {
+      if (fetchId !== latestFetchIdRef.current) return;
       console.error("Failed to fetch users", err);
     } finally {
-      setLoading(false);
+      if (fetchId === latestFetchIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [currentPage, searchQuery, statusFilter, setUsers]);
 
@@ -79,7 +111,7 @@ export default function UserManagement({ users, setUsers }) {
 
   const handleUserClick = async (user) => {
     setSelectedUser(user);
-    setUserStatus(user.status || "pending");
+    setUserStatus(normalizeStatus(user?.status));
     setWalletUpdateMessage("");
     setUpdateMessage("");
     setWalletForm(buildWalletForm(user?.wallets));
@@ -94,7 +126,7 @@ export default function UserManagement({ users, setUsers }) {
       }
 
       setSelectedUser(() => ({ ...resUserDetails }));
-      setUserStatus(resUserDetails?.kyc?.status || "pending");
+      setUserStatus(normalizeStatus(resUserDetails?.kyc?.status || user?.status));
       setWalletForm(buildWalletForm(resUserDetails?.wallets));
     } catch (err) {
       console.error("Failed to fetch user details:", err);
@@ -103,6 +135,16 @@ export default function UserManagement({ users, setUsers }) {
 
   const handleStatusChange = async () => {
     if (!selectedUser) return;
+    const currentStatusRaw = selectedUser?.kyc?.status || selectedUser?.status;
+
+    if (!VALID_STATUSES.has(String(userStatus || "").toLowerCase())) {
+      setUpdateMessage("Invalid status selected.");
+      return;
+    }
+
+    if (normalizeStatus(userStatus) === normalizeStatus(currentStatusRaw)) {
+      return;
+    }
 
     const token = useUserStore.getState().token;
     if (!token) return;
@@ -117,30 +159,27 @@ export default function UserManagement({ users, setUsers }) {
         userStatus,
       );
 
-      const updatedStatus = response?.new_status;
+      const rawUpdatedStatus = response?.new_status;
 
-      if (!updatedStatus) {
+      if (!rawUpdatedStatus) {
         throw new Error("Invalid response from server");
       }
+      const updatedStatus = normalizeStatus(rawUpdatedStatus);
 
       const updatedUser = {
         ...selectedUser,
-        kyc: {
-          ...selectedUser.kyc,
-          status: updatedStatus,
-        },
+        kyc: selectedUser?.kyc
+          ? {
+              ...selectedUser.kyc,
+              status: updatedStatus,
+            }
+          : selectedUser?.kyc,
         status: updatedStatus,
       };
 
       setSelectedUser(updatedUser);
-
-      setUsers((prevUsers) =>
-        prevUsers.map((u) =>
-          u.id === updatedUser.id ? { ...u, status: updatedStatus } : u,
-        ),
-      );
-
       setUpdateMessage(response.message);
+      await fetchUsers();
     } catch (error) {
       console.error("Failed to update KYC:", error);
       setUpdateMessage(
@@ -240,14 +279,13 @@ export default function UserManagement({ users, setUsers }) {
     while (page <= maxPages) {
       const res = await getAllUsers(token, {
         page,
+        status: "pending",
       });
 
       const pageUsers = res?.data?.users || [];
       if (!pageUsers.length) break;
 
-      pendingUsers.push(
-        ...pageUsers.filter((user) => user?.status?.toLowerCase() === "pending"),
-      );
+      pendingUsers.push(...pageUsers);
 
       if (pageUsers.length < limitPerPage) break;
       page += 1;
@@ -342,7 +380,7 @@ export default function UserManagement({ users, setUsers }) {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (normalizeStatus(status)) {
       case "approved":
         return "text-green-400 bg-green-500/10 border-green-500/30";
       case "pending":
@@ -353,6 +391,20 @@ export default function UserManagement({ users, setUsers }) {
         return "text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
   };
+
+  const displayedUsers =
+    statusFilter === "all"
+      ? users
+      : users.filter((u) => normalizeStatus(u?.status) === statusFilter);
+
+  const displayedStatusCounts =
+    statusFilter === "all"
+      ? statusCounts
+      : {
+          approved: statusFilter === "approved" ? totalUsers : 0,
+          pending: statusFilter === "pending" ? totalUsers : 0,
+          rejected: statusFilter === "rejected" ? totalUsers : 0,
+        };
 
 
 
@@ -465,7 +517,7 @@ export default function UserManagement({ users, setUsers }) {
                     : "text-red-400"
               }`}
             >
-              {users.filter((u) => u.status === status).length}
+              {displayedStatusCounts[status] ?? 0}
             </div>
             <div className="text-sm text-gray-400 capitalize">{status}</div>
           </div>
@@ -499,14 +551,16 @@ export default function UserManagement({ users, setUsers }) {
                     Loading users...
                   </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : displayedUsers.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="text-center p-6 text-gray-400">
                     No users found
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
+                displayedUsers.map((user) => {
+                  const normalizedStatus = normalizeStatus(user?.status);
+                  return (
                   <tr
                     key={user.id}
                     onClick={() => handleUserClick(user)}
@@ -519,13 +573,14 @@ export default function UserManagement({ users, setUsers }) {
                     <td className="p-4 text-gray-400">{user.email}</td>
                     <td className="p-4">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(user.status)}`}
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(normalizedStatus)}`}
                       >
-                        {user?.status?.toUpperCase()}
+                        {normalizedStatus.toUpperCase()}
                       </span>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
