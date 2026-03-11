@@ -9,37 +9,38 @@ import useUserStore from "../store/userStore";
 export const Hero = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  // const [timeLeft, setTimeLeft] = useState({
+  //   days: 0,
+  //   hours: 0,
+  //   minutes: 0,
+  //   seconds: 0,
+  // });
 
-  useEffect(() => {
-    const targetDate = new Date("2026-03-06T00:00:00").getTime();
+  // count down related useEffect code
+  // useEffect(() => {
+  //   const targetDate = new Date("2026-03-06T00:00:00").getTime();
 
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
+  //   const updateCountdown = () => {
+  //     const now = new Date().getTime();
+  //     const difference = targetDate - now;
 
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-          ),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        });
-      }
-    };
+  //     if (difference > 0) {
+  //       setTimeLeft({
+  //         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+  //         hours: Math.floor(
+  //           (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  //         ),
+  //         minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+  //         seconds: Math.floor((difference % (1000 * 60)) / 1000),
+  //       });
+  //     }
+  //   };
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+  //   updateCountdown();
+  //   const interval = setInterval(updateCountdown, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20 bg-dark-bg">
@@ -110,7 +111,7 @@ export const Hero = () => {
         </motion.p>
 
         {/* Countdown Timer */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
@@ -138,7 +139,7 @@ export const Hero = () => {
               </div>
             ))}
           </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* CTA Buttons */}
         <motion.div

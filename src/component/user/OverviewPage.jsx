@@ -10,6 +10,7 @@ import {
   Pickaxe,
   User,
   MessageCircle,
+  Headset,
 } from "lucide-react";
 import useUserStore from "../../store/userStore";
 import { useCallback, useEffect, useState } from "react";
@@ -299,7 +300,7 @@ const OverviewPage = ({ setActivePage }) => {
     {
       id: "support",
       label: "Support",
-      icon: MessageCircle,
+      icon: Headset,
       onClick: () => window.open("https://t.me/ArbigrowOfficial", "_blank"),
     },
   ];
@@ -497,8 +498,15 @@ const OverviewPage = ({ setActivePage }) => {
               </div>
             </div>
             <div className="text-sm text-gray-400 mb-1">{wallet.label}</div>
-            <div className="text-2xl font-bold text-white mb-1">
-              ${wallet.balance.toFixed(7)}
+            <div className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+              {wallet.currency === "USDT" ? (
+                <>${wallet.balance.toFixed(2)}</>
+              ) : (
+                <>
+                  <Coins className="w-5 h-5 text-blue-400" />
+                  {wallet.balance.toFixed(7)}
+                </>
+              )}
             </div>
             <div className="text-xs text-gray-500">
               {wallet.hasInfo ? (

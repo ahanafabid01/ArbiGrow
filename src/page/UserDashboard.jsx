@@ -306,6 +306,24 @@ export function UserDashboard() {
       icon: UserCircle,
       description: "Account settings",
     },
+    {
+      id: "terms",
+      label: "Terms & Conditions",
+      icon: FileText,
+      description: "Platform terms",
+    },
+    {
+      id: "privacy",
+      label: "Privacy Policy",
+      icon: Lock,
+      description: "Data & privacy",
+    },
+    {
+      id: "whitepaper",
+      label: "Technical Whitepaper",
+      icon: Award,
+      description: "Project documentation",
+    },
   ];
 
   // Filter transactions
@@ -637,10 +655,23 @@ export function UserDashboard() {
               <button
                 key={page.id}
                 onClick={() => {
-                  if (!page.comingSoon) {
-                    setActivePage(page.id);
-                    setMobileSidebarOpen(false);
+                  if (page.id === "terms") {
+                    navigate("/terms-conditions");
+                    return;
                   }
+
+                  if (page.id === "privacy") {
+                    navigate("/privacy-policy");
+                    return;
+                  }
+
+                  if (page.id === "whitepaper") {
+                    window.open("/technical-whitepaper.pdf", "_blank");
+                    return;
+                  }
+
+                  setActivePage(page.id);
+                  setMobileSidebarOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activePage === page.id
