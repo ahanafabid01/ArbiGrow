@@ -13,7 +13,8 @@ import {
   Percent,
   Network,
   Package,
-  Activity
+  Activity,
+  Megaphone,
 } from "lucide-react";
 import logo from "../../assets/Arbigrow-Logo.png";
 import useUserStore from "../../store/userStore";
@@ -69,6 +70,12 @@ export default function AdminLayout({
   label: "Platform Statistics",
   icon: Activity,
   description: "Update statistics",
+  },
+  {
+    id: "announcements",
+    label: "Announcements",
+    icon: Megaphone,
+    description: "Popup announcements",
   },
   {
       id: "roi",

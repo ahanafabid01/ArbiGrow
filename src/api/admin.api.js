@@ -277,3 +277,59 @@ export const updatePlatformStats = async (token, payload) => {
   );
   return res.data || {};
 };
+
+export const getAdminAnnouncements = async (token) => {
+  const res = await api.get("v1/announcements/admin", authHeaders(token));
+  return res.data || { data: [] };
+};
+
+export const createAnnouncement = async (token, formData) => {
+  const res = await api.post(
+    "v1/announcements/admin",
+    formData,
+    {
+      ...authHeaders(token),
+      headers: {
+        ...(authHeaders(token).headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+  return res.data || {};
+};
+
+export const updateAnnouncement = async (token, announcementId, formData) => {
+  const res = await api.patch(
+    `v1/announcements/admin/${announcementId}`,
+    formData,
+    {
+      ...authHeaders(token),
+      headers: {
+        ...(authHeaders(token).headers || {}),
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+  return res.data || {};
+};
+
+export const updateAnnouncementStatus = async (
+  token,
+  announcementId,
+  isActive,
+) => {
+  const res = await api.patch(
+    `v1/announcements/admin/${announcementId}/status`,
+    { is_active: Boolean(isActive) },
+    authHeaders(token),
+  );
+  return res.data || {};
+};
+
+export const deleteAnnouncement = async (token, announcementId) => {
+  const res = await api.delete(
+    `v1/announcements/admin/${announcementId}`,
+    authHeaders(token),
+  );
+  return res.data || {};
+};

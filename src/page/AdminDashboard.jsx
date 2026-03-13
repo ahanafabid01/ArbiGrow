@@ -10,6 +10,7 @@ import DepositNetworks from "../component/admin/DepositNetworks.jsx";
 import { InvestmentsManagement } from "../component/admin/InvestmentsManagement.jsx";
 import RoiManagement from "../component/admin/RoiManagement.jsx";
 import { StatisticsManagement } from "../component/admin/statistics/StatisticsManagement.jsx";
+import AnnouncementsManagement from "../component/admin/AnnouncementsManagement.jsx";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -42,6 +43,8 @@ export default function AdminDashboard() {
         return <InvestmentsManagement />;
       case "statistics":
       return <StatisticsManagement />;
+      case "announcements":
+        return <AnnouncementsManagement />;
       case "roi":
         return <RoiManagement />;
       case "reports":

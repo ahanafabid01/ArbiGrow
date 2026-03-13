@@ -46,6 +46,7 @@ import {
   getMyWithdrawals,
   getMyEarningsHistory,
   getMyProfitHistory,
+  getActiveAnnouncement,
 } from "../api/user.api.js";
 import DepositPage from "../component/user/DepositUSDT.jsx";
 import WithdrawPage from "../component/user/WithdrawUSDT.jsx";
@@ -53,6 +54,7 @@ import TierSection from "../component/package/TierSection.jsx";
 import PackageModal from "../component/package/PackageModal.jsx";
 import { MyInvestments } from "../component/user/MyInvestments.jsx";
 import { Market } from "../component/user/Market.jsx";
+import { AnnouncementModal } from "../component/user/AnnouncementModal.jsx";
 // Mock data for market prices
 
 const EMPTY_REFERRAL_LEVELS = [
@@ -83,6 +85,8 @@ export function UserDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactionsLoaded, setTransactionsLoaded] = useState(false);
+  const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
   const [referralLevels, setReferralLevels] = useState(EMPTY_REFERRAL_LEVELS);
@@ -101,6 +105,40 @@ export function UserDashboard() {
   useEffect(() => {
     // console.log("userrr", user);
   }, [user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadActiveAnnouncement = async () => {
+      if (!user?.id) return;
+
+      try {
+        const response = await getActiveAnnouncement();
+        const nextAnnouncement = response?.data?.data || null;
+        if (!isMounted) return;
+
+        setActiveAnnouncement(nextAnnouncement);
+        if (!nextAnnouncement) {
+          setIsAnnouncementOpen(false);
+          return;
+        }
+        setIsAnnouncementOpen(true);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("Failed to load active announcement:", error);
+      }
+    };
+
+    loadActiveAnnouncement();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const handleCloseAnnouncement = () => {
+    setIsAnnouncementOpen(false);
+  };
 
   useEffect(() => {
     if (isAccountOnHold && !HOLD_ALLOWED_PAGES.has(activePage)) {
@@ -825,6 +863,12 @@ export function UserDashboard() {
         )}
         {renderPageContent()}
       </div>
+
+      <AnnouncementModal
+        open={isAnnouncementOpen}
+        announcement={activeAnnouncement}
+        onClose={handleCloseAnnouncement}
+      />
     </div>
   );
 }

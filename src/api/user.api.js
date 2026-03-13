@@ -83,3 +83,7 @@ export const getMyEarningsHistory = () => {
 export const getMyProfitHistory = () => {
   return api.get("v1/user/profit-history", authHeaders());
 };
+
+export const getActiveAnnouncement = () => {
+  return api.get("v1/announcements/active", authHeaders());
+};
