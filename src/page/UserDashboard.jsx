@@ -154,7 +154,18 @@ export function UserDashboard() {
   };
 
   // ── Transaction helpers ──────────────────────────────────────
-  const _fmtAmount = (val) => parseFloat(val || 0).toFixed(2);
+  const _fmtAmount = (
+    val,
+    { minimumFractionDigits = 2, maximumFractionDigits = 2 } = {},
+  ) => {
+    const amount = Number(val ?? 0);
+    if (Number.isNaN(amount)) return "0.00";
+
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits,
+      maximumFractionDigits,
+    }).format(amount);
+  };
   const _fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString() : "-");
   const _fmtWallet = (key) =>
     (key || "")
@@ -177,6 +188,7 @@ export function UserDashboard() {
         type: "Deposit",
         wallet: "Deposit Wallet",
         amount: _fmtAmount(d.amount),
+        amountDirection: "credit",
         currency: "USDT",
         status: _mapStatus(d.status),
         _ts: new Date(d.created_at).getTime(),
@@ -189,6 +201,7 @@ export function UserDashboard() {
         type: "Withdrawal",
         wallet: _fmtWallet(w.source_wallet),
         amount: _fmtAmount(w.amount),
+        amountDirection: "debit",
         currency: "USDT",
         status: _mapStatus(w.status),
         _ts: new Date(w.created_at).getTime(),
@@ -204,7 +217,11 @@ export function UserDashboard() {
           e.wallet_type === "referral"
             ? "Referral Wallet"
             : "Generation Wallet",
-        amount: _fmtAmount(e.amount),
+        amount: _fmtAmount(e.amount, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 14,
+        }),
+        amountDirection: "credit",
         currency: "USDT",
         status: "Completed",
         _ts: new Date(e.created_at).getTime(),
@@ -216,7 +233,11 @@ export function UserDashboard() {
         date: _fmtDate(p.created_at),
         type: "Profit Credit",
         wallet: "Main Wallet",
-        amount: _fmtAmount(p.amount),
+        amount: _fmtAmount(p.amount, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 14,
+        }),
+        amountDirection: "credit",
         currency: "USDT",
         status: "Completed",
         _ts: new Date(p.created_at).getTime(),

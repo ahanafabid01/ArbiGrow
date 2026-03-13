@@ -1,5 +1,9 @@
 import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 
 const TransactionHistoryPage = ({
   currentTransactions,
@@ -14,6 +18,38 @@ const TransactionHistoryPage = ({
   getStatusColor,
   isLoading,
 }) => {
+  const getAmountMeta = (transaction) => {
+    const explicitDirection = transaction.amountDirection;
+    const isDebit =
+      explicitDirection === "debit" ||
+      (!explicitDirection &&
+        transaction.type.toLowerCase().includes("withdrawal"));
+
+    return {
+      isDebit,
+      amountClassName: isDebit ? "text-red-300" : "text-emerald-300",
+      prefix: isDebit ? "-" : "+",
+    };
+  };
+
+  const renderAmount = (transaction, alignRight = false) => {
+    const { amountClassName, prefix } = getAmountMeta(transaction);
+
+    return (
+      <div
+        className={`flex items-center gap-2 font-semibold ${amountClassName} ${
+          alignRight ? "justify-end" : ""
+        }`}
+      >
+        <span>{`${prefix}${transaction.amount}`}</span>
+      </div>
+    );
+  };
+
+  const totalPageCount = Math.max(1, totalPages);
+  const isPrevDisabled = currentPage <= 1;
+  const isNextDisabled = totalPages === 0 || currentPage >= totalPages;
+
   return (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -21,7 +57,7 @@ const TransactionHistoryPage = ({
         transition={{ delay: 0.5 }}
         className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 overflow-hidden"
       >
-        <div className="p-6 border-b border-white/10">
+        <div className="p-4 sm:p-6 border-b border-white/10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-white mb-1">
@@ -31,27 +67,27 @@ const TransactionHistoryPage = ({
                 View all your wallet transactions
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="w-full sm:w-auto flex items-center gap-2">
               <select
                 value={transactionFilter}
                 onChange={(e) => {
                   setTransactionFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-4 py-2 rounded-lg bg-[#0A122C] border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#0A122C] border border-white/10 text-white text-sm focus:border-cyan-500/50 focus:outline-none"
               >
                 <option value="All">All Transactions</option>
                 <option value="Deposit">Deposits</option>
                 <option value="Withdrawal">Withdrawals</option>
                 <option value="Profit">Profit</option>
                 <option value="Referral">Referral</option>
-                <option value="Mining">Mining</option>
+                <option value="Generation">Generation</option>
               </select>
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
@@ -102,8 +138,8 @@ const TransactionHistoryPage = ({
                   <td className="p-4 text-gray-400 text-sm">
                     {transaction.wallet}
                   </td>
-                  <td className="p-4 text-right text-white font-semibold">
-                    {transaction.amount}
+                  <td className="p-4">
+                    {renderAmount(transaction, true)}
                   </td>
                   <td className="p-4">
                     <span
@@ -130,31 +166,90 @@ const TransactionHistoryPage = ({
           </table>
         </div>
 
+        <div className="md:hidden p-4 space-y-3">
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
+              <p className="text-gray-400 text-sm">Loading transactions...</p>
+            </div>
+          ) : currentTransactions.length === 0 ? (
+            <div className="py-10 text-center text-gray-500 text-sm rounded-lg border border-white/10 bg-white/[0.02]">
+              No transactions found.
+            </div>
+          ) : (
+            currentTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {transaction.type}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {transaction.date}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getStatusColor(transaction.status)}`}
+                  >
+                    {transaction.status}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Wallet</p>
+                    <p className="text-sm text-gray-300">{transaction.wallet}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 mb-1">Amount</p>
+                    {renderAmount(transaction, true)}
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 mb-1">Currency</p>
+                    <span
+                      className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                        transaction.currency === "ARBX"
+                          ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/30"
+                          : "bg-green-500/10 text-green-400 border border-green-500/30"
+                      }`}
+                    >
+                      {transaction.currency}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Pagination */}
-        <div className="p-4 border-t border-white/10 flex items-center justify-between">
-          <div className="text-sm text-gray-400">
+        <div className="p-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs sm:text-sm text-gray-400">
             {isLoading
               ? "Loading..."
               : filteredTransactions.length === 0
               ? "No transactions"
               : `Showing ${startIndex + 1} to ${Math.min(endIndex, filteredTransactions.length)} of ${filteredTransactions.length} transactions`}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              disabled={isPrevDisabled}
               className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="px-4 py-2 text-sm text-gray-400">
-              Page {currentPage} of {totalPages}
+            <span className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-400 whitespace-nowrap">
+              Page {Math.min(currentPage, totalPageCount)} of {totalPageCount}
             </span>
             <button
               onClick={() =>
                 setCurrentPage((prev) => Math.min(totalPages, prev + 1))
               }
-              disabled={currentPage === totalPages}
+              disabled={isNextDisabled}
               className="p-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
