@@ -15,6 +15,8 @@ export default function UserDetailModal({
   onClose,
   userStatus,
   setUserStatus,
+  userIssueNote,
+  setUserIssueNote,
   handleStatusChange,
   isUpdating,
   updateMessage,
@@ -33,13 +35,34 @@ export default function UserDetailModal({
   ].filter(Boolean);
   const normalizeStatus = (value) => {
     const normalized = String(value || "pending").toLowerCase();
-    return ["pending", "approved", "rejected"].includes(normalized)
+    return ["pending", "approved", "rejected", "issue"].includes(normalized)
       ? normalized
       : "pending";
   };
   const currentUserStatus = normalizeStatus(
-    selectedUser?.kyc?.status || selectedUser?.status,
+    selectedUser?.status || selectedUser?.kyc?.status,
   );
+  const currentIssueNote = String(selectedUser?.issue_note || "");
+  const normalizedSelectedStatus = normalizeStatus(userStatus);
+  const hasIssueNoteChanged =
+    normalizedSelectedStatus === "issue" &&
+    String(userIssueNote || "").trim() !== currentIssueNote.trim();
+  const shouldDisableStatusUpdate =
+    isUpdating ||
+    (normalizedSelectedStatus === currentUserStatus && !hasIssueNoteChanged);
+
+  const depositHistory = Array.isArray(selectedUser?.deposit_history)
+    ? selectedUser.deposit_history
+    : [];
+  const withdrawalHistory = Array.isArray(selectedUser?.withdrawal_history)
+    ? selectedUser.withdrawal_history
+    : [];
+  const formatDateTime = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleString();
+  };
 
   return (
     <AnimatePresence>
@@ -262,13 +285,19 @@ export default function UserDetailModal({
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
+                    <option value="issue">Issue</option>
                   </select>
+                  {normalizedSelectedStatus === "issue" && (
+                    <textarea
+                      value={userIssueNote}
+                      onChange={(e) => setUserIssueNote(e.target.value)}
+                      placeholder="Write the issue details for this user..."
+                      className="flex-1 min-h-24 px-4 py-3 rounded-xl bg-[#0C1035] border border-white/20 text-white placeholder-gray-500 focus:border-cyan-500/50 focus:outline-none"
+                    />
+                  )}
                   <button
                     onClick={handleStatusChange}
-                    disabled={
-                      normalizeStatus(userStatus) === currentUserStatus ||
-                      isUpdating
-                    }
+                    disabled={shouldDisableStatusUpdate}
                     className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isUpdating ? "Updating..." : "Update Status"}
@@ -279,6 +308,82 @@ export default function UserDetailModal({
                       {updateMessage}
                     </div>
                   )}
+                </div>
+
+                <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="rounded-xl border border-white/15 bg-white/5 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-cyan-300">
+                      Deposit History
+                    </h4>
+                    <div className="max-h-56 space-y-2 overflow-y-auto">
+                      {depositHistory.length === 0 ? (
+                        <div className="text-sm text-gray-400">
+                          No deposit history found.
+                        </div>
+                      ) : (
+                        depositHistory.map((item) => (
+                          <div
+                            key={`dep-${item.id}`}
+                            className="rounded-lg border border-white/10 bg-[#0C1035] p-3 text-sm"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-white">
+                                {item.amount} USDT
+                              </span>
+                              <span className="text-xs uppercase text-gray-400">
+                                {item.status}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-gray-400">
+                              {item.network_name || "-"} | {formatDateTime(item.created_at)}
+                            </div>
+                            <div className="mt-1 break-all font-mono text-[11px] text-gray-500">
+                              {item.txid || "-"}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/15 bg-white/5 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-cyan-300">
+                      Withdrawal History
+                    </h4>
+                    <div className="max-h-56 space-y-2 overflow-y-auto">
+                      {withdrawalHistory.length === 0 ? (
+                        <div className="text-sm text-gray-400">
+                          No withdrawal history found.
+                        </div>
+                      ) : (
+                        withdrawalHistory.map((item) => (
+                          <div
+                            key={`wdw-${item.id}`}
+                            className="rounded-lg border border-white/10 bg-[#0C1035] p-3 text-sm"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-white">
+                                {item.amount} USDT
+                              </span>
+                              <span className="text-xs uppercase text-gray-400">
+                                {item.status}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-gray-400">
+                              {item.source_wallet || "-"} |{" "}
+                              {item.network_name || "-"}
+                            </div>
+                            <div className="mt-1 break-all text-[11px] text-gray-500">
+                              {item.destination_address || "-"}
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
+                              {formatDateTime(item.created_at)}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

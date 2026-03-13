@@ -42,14 +42,29 @@ export const getUser = async (token, user_Id) => {
   return res.data || {}; // single user object
 };
 
-export const updateKYCStatus = async (token, user_Id, statusValue) => {
+export const updateKYCStatus = async (
+  token,
+  user_Id,
+  statusValue,
+  issueNote = "",
+) => {
+  const payload = { status: statusValue };
+  if (String(statusValue || "").toLowerCase() === "issue") {
+    payload.issue_note = String(issueNote || "").trim();
+  }
+
   const res = await api.patch(
     `v1/admin/users/${user_Id}/kyc-status`,
-    { status: statusValue },
+    payload,
     authHeaders(token),
   );
 
   // return only user data
+  return res.data || {};
+};
+
+export const deleteAdminUser = async (token, userId) => {
+  const res = await api.delete(`v1/admin/users/${userId}`, authHeaders(token));
   return res.data || {};
 };
 

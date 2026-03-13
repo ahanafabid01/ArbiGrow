@@ -62,6 +62,14 @@ const EMPTY_REFERRAL_LEVELS = [
   { level: 4, commissionRate: "6%", totalEarnings: 0, users: [] },
   { level: 5, commissionRate: "5%", totalEarnings: 0, users: [] },
 ];
+const HOLD_ALLOWED_PAGES = new Set([
+  "overview",
+  "deposit",
+  "profile",
+  "terms",
+  "privacy",
+  "whitepaper",
+]);
 
 export function UserDashboard() {
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -87,10 +95,25 @@ export function UserDashboard() {
   const transactionsPerPage = 50;
   const { user } = useUserStore();
   const { logout } = useUserStore();
+  const isAccountOnHold =
+    String(user?.account_status || "").toLowerCase() === "on_hold";
 
   useEffect(() => {
     // console.log("userrr", user);
   }, [user]);
+
+  useEffect(() => {
+    if (isAccountOnHold && !HOLD_ALLOWED_PAGES.has(activePage)) {
+      setActivePage("deposit");
+    }
+  }, [activePage, isAccountOnHold]);
+
+  const safeSetActivePage = (pageId) => {
+    if (isAccountOnHold && !HOLD_ALLOWED_PAGES.has(pageId)) {
+      return;
+    }
+    setActivePage(pageId);
+  };
 
   useEffect(() => {
     const loadReferralNetwork = async () => {
@@ -479,7 +502,7 @@ export function UserDashboard() {
       return (
         <MyInvestments
           refreshKey={investmentsRefreshKey}
-          onNavigateToPackages={() => setActivePage("packages")}
+          onNavigateToPackages={() => safeSetActivePage("packages")}
         />
       );
     }
@@ -494,7 +517,7 @@ export function UserDashboard() {
             setSelectedPackage={setSelectedPackage}
             onPurchased={() => {
               setInvestmentsRefreshKey((prev) => prev + 1);
-              setActivePage("investments");
+              safeSetActivePage("investments");
             }}
           />
         </>
@@ -536,7 +559,7 @@ export function UserDashboard() {
           endIndex={endIndex}
           filteredTransactions={filteredTransactions}
           getStatusColor={getStatusColor}
-          setActivePage={setActivePage}
+          setActivePage={safeSetActivePage}
         />
       );
     }
@@ -690,13 +713,18 @@ export function UserDashboard() {
                     window.open("/technical-whitepaper.pdf", "_blank");
                     return;
                   }
+                  if (isAccountOnHold && !HOLD_ALLOWED_PAGES.has(page.id)) {
+                    return;
+                  }
 
-                  setActivePage(page.id);
+                  safeSetActivePage(page.id);
                   setMobileSidebarOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
                   activePage === page.id
                     ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30"
+                    : isAccountOnHold && !HOLD_ALLOWED_PAGES.has(page.id)
+                      ? "text-gray-600 cursor-not-allowed opacity-50"
                     : page.comingSoon
                       ? "text-gray-600 cursor-default"
                       : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -789,6 +817,12 @@ export function UserDashboard() {
               : "0",
         }}
       >
+        {isAccountOnHold && (
+          <div className="mx-4 mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Your account is currently on hold. You can only use deposits right now.
+            {user?.account_issue ? ` Issue: ${user.account_issue}` : ""}
+          </div>
+        )}
         {renderPageContent()}
       </div>
     </div>

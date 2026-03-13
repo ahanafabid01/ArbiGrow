@@ -1,8 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import UserDetailModal from "./UserDetailModal.jsx";
 import useUserStore from "../../store/userStore.js";
-import { getUser, updateKYCStatus, updateUserWallets } from "../../api/admin.api.js";
+import {
+  deleteAdminUser,
+  getUser,
+  updateKYCStatus,
+  updateUserWallets,
+} from "../../api/admin.api.js";
 import { getAllUsers } from "../../api/admin.api.js";
 
 const WALLET_FIELDS = [
@@ -21,7 +26,7 @@ const buildWalletForm = (wallets = {}) =>
     return acc;
   }, {});
 
-const VALID_STATUSES = new Set(["approved", "pending", "rejected"]);
+const VALID_STATUSES = new Set(["approved", "pending", "rejected", "issue"]);
 const normalizeStatus = (value) => {
   const normalized = String(value || "pending").toLowerCase();
   return VALID_STATUSES.has(normalized) ? normalized : "pending";
@@ -33,6 +38,7 @@ export default function UserManagement({ users, setUsers }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [userStatus, setUserStatus] = useState("");
+  const [userIssueNote, setUserIssueNote] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
   const [walletForm, setWalletForm] = useState(buildWalletForm());
@@ -46,16 +52,19 @@ export default function UserManagement({ users, setUsers }) {
     approved: 0,
     pending: 0,
     rejected: 0,
+    issue: 0,
   });
   const [loading, setLoading] = useState(false);
   const [isBulkApproving, setIsBulkApproving] = useState(false);
   const [bulkUpdateMessage, setBulkUpdateMessage] = useState("");
+  const [deletingUserId, setDeletingUserId] = useState(null);
   const latestFetchIdRef = useRef(0);
 
   const { setUserDetails } = useUserStore();
   
   const handleCloseModal = () => {
     setSelectedUser(null);
+    setUserIssueNote("");
     setUpdateMessage("");
     setWalletUpdateMessage("");
     setIsUpdating(false);
@@ -94,6 +103,7 @@ export default function UserManagement({ users, setUsers }) {
         approved: Number(backendCounts?.approved || 0) || 0,
         pending: Number(backendCounts?.pending || 0) || 0,
         rejected: Number(backendCounts?.rejected || 0) || 0,
+        issue: Number(backendCounts?.issue || 0) || 0,
       });
     } catch (err) {
       if (fetchId !== latestFetchIdRef.current) return;
@@ -112,6 +122,7 @@ export default function UserManagement({ users, setUsers }) {
   const handleUserClick = async (user) => {
     setSelectedUser(user);
     setUserStatus(normalizeStatus(user?.status));
+    setUserIssueNote(String(user?.issue_note || ""));
     setWalletUpdateMessage("");
     setUpdateMessage("");
     setWalletForm(buildWalletForm(user?.wallets));
@@ -126,7 +137,12 @@ export default function UserManagement({ users, setUsers }) {
       }
 
       setSelectedUser(() => ({ ...resUserDetails }));
-      setUserStatus(normalizeStatus(resUserDetails?.kyc?.status || user?.status));
+      setUserStatus(
+        normalizeStatus(
+          resUserDetails?.status || resUserDetails?.kyc?.status || user?.status,
+        ),
+      );
+      setUserIssueNote(String(resUserDetails?.issue_note || ""));
       setWalletForm(buildWalletForm(resUserDetails?.wallets));
     } catch (err) {
       console.error("Failed to fetch user details:", err);
@@ -135,14 +151,26 @@ export default function UserManagement({ users, setUsers }) {
 
   const handleStatusChange = async () => {
     if (!selectedUser) return;
-    const currentStatusRaw = selectedUser?.kyc?.status || selectedUser?.status;
+    const currentStatusRaw =
+      selectedUser?.status || selectedUser?.kyc?.status || "pending";
+    const nextStatus = normalizeStatus(userStatus);
+    const currentStatus = normalizeStatus(currentStatusRaw);
+    const nextIssueNote = String(userIssueNote || "").trim();
+    const currentIssueNote = String(selectedUser?.issue_note || "").trim();
 
     if (!VALID_STATUSES.has(String(userStatus || "").toLowerCase())) {
       setUpdateMessage("Invalid status selected.");
       return;
     }
 
-    if (normalizeStatus(userStatus) === normalizeStatus(currentStatusRaw)) {
+    if (nextStatus === "issue" && !nextIssueNote) {
+      setUpdateMessage("Please write the issue details before saving.");
+      return;
+    }
+
+    const isIssueNoteUnchanged =
+      nextStatus !== "issue" || nextIssueNote === currentIssueNote;
+    if (nextStatus === currentStatus && isIssueNoteUnchanged) {
       return;
     }
 
@@ -156,7 +184,8 @@ export default function UserManagement({ users, setUsers }) {
       const response = await updateKYCStatus(
         token,
         selectedUser.id,
-        userStatus,
+        nextStatus,
+        nextIssueNote,
       );
 
       const rawUpdatedStatus = response?.new_status;
@@ -165,19 +194,30 @@ export default function UserManagement({ users, setUsers }) {
         throw new Error("Invalid response from server");
       }
       const updatedStatus = normalizeStatus(rawUpdatedStatus);
+      const updatedIssueNote =
+        updatedStatus === "issue"
+          ? String(response?.issue_note || nextIssueNote)
+          : "";
 
       const updatedUser = {
         ...selectedUser,
         kyc: selectedUser?.kyc
           ? {
               ...selectedUser.kyc,
-              status: updatedStatus,
+              status:
+                updatedStatus === "issue"
+                  ? selectedUser.kyc.status
+                  : updatedStatus,
             }
           : selectedUser?.kyc,
         status: updatedStatus,
+        account_status: updatedStatus === "issue" ? "on_hold" : "active",
+        issue_note: updatedIssueNote || null,
       };
 
       setSelectedUser(updatedUser);
+      setUserStatus(updatedStatus);
+      setUserIssueNote(updatedIssueNote);
       setUpdateMessage(response.message);
       await fetchUsers();
     } catch (error) {
@@ -261,6 +301,39 @@ export default function UserManagement({ users, setUsers }) {
       );
     } finally {
       setIsWalletUpdating(false);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!user?.id || deletingUserId) return;
+
+    const shouldDelete = window.confirm(
+      `Delete user "${user?.username || user?.email}" permanently? This action cannot be undone.`,
+    );
+    if (!shouldDelete) return;
+
+    const token = useUserStore.getState().token;
+    if (!token) return;
+
+    try {
+      setDeletingUserId(user.id);
+      setUpdateMessage("");
+      await deleteAdminUser(token, user.id);
+
+      if (selectedUser?.id === user.id) {
+        handleCloseModal();
+      }
+
+      setUsers((prevUsers) => prevUsers.filter((item) => item.id !== user.id));
+      await fetchUsers();
+      setUpdateMessage("User deleted successfully.");
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      setUpdateMessage(
+        error?.response?.data?.detail || "Failed to delete user",
+      );
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -387,6 +460,8 @@ export default function UserManagement({ users, setUsers }) {
         return "text-yellow-400 bg-yellow-500/10 border-yellow-500/30";
       case "rejected":
         return "text-red-400 bg-red-500/10 border-red-500/30";
+      case "issue":
+        return "text-orange-300 bg-orange-500/10 border-orange-500/30";
       default:
         return "text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
@@ -404,6 +479,7 @@ export default function UserManagement({ users, setUsers }) {
           approved: statusFilter === "approved" ? totalUsers : 0,
           pending: statusFilter === "pending" ? totalUsers : 0,
           rejected: statusFilter === "rejected" ? totalUsers : 0,
+          issue: statusFilter === "issue" ? totalUsers : 0,
         };
 
 
@@ -465,7 +541,7 @@ export default function UserManagement({ users, setUsers }) {
 
         {/* Status Filters */}
         <div className="flex gap-2">
-          {["all", "approved", "pending", "rejected"].map((status) => (
+          {["all", "approved", "pending", "rejected", "issue"].map((status) => (
             <button
               key={status}
               onClick={() => {
@@ -478,8 +554,10 @@ export default function UserManagement({ users, setUsers }) {
                     ? "bg-green-500/20 border border-green-500/50 text-green-400"
                     : status === "pending"
                       ? "bg-yellow-500/20 border border-yellow-500/50 text-yellow-400"
-                      : status === "rejected"
+                    : status === "rejected"
                         ? "bg-red-500/20 border border-red-500/50 text-red-400"
+                      : status === "issue"
+                        ? "bg-orange-500/20 border border-orange-500/50 text-orange-300"
                         : "bg-gradient-to-r from-blue-600 to-cyan-500 text-white"
                   : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
               }`}
@@ -491,13 +569,13 @@ export default function UserManagement({ users, setUsers }) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10">
           <div className="text-2xl font-bold text-white">{totalUsers}</div>
           <div className="text-sm text-gray-400">Total Users</div>
         </div>
 
-        {["approved", "pending", "rejected"].map((status) => (
+        {["approved", "pending", "rejected", "issue"].map((status) => (
           <div
             key={status}
             className={`p-4 rounded-xl bg-gradient-to-br ${
@@ -505,7 +583,9 @@ export default function UserManagement({ users, setUsers }) {
                 ? "from-green-500/10 to-green-500/5 border-green-500/20"
                 : status === "pending"
                   ? "from-yellow-500/10 to-yellow-500/5 border-yellow-500/20"
-                  : "from-red-500/10 to-red-500/5 border-red-500/20"
+                  : status === "rejected"
+                    ? "from-red-500/10 to-red-500/5 border-red-500/20"
+                    : "from-orange-500/10 to-orange-500/5 border-orange-500/20"
             } border`}
           >
             <div
@@ -514,7 +594,9 @@ export default function UserManagement({ users, setUsers }) {
                   ? "text-green-400"
                   : status === "pending"
                     ? "text-yellow-400"
-                    : "text-red-400"
+                    : status === "rejected"
+                      ? "text-red-400"
+                      : "text-orange-300"
               }`}
             >
               {displayedStatusCounts[status] ?? 0}
@@ -542,18 +624,21 @@ export default function UserManagement({ users, setUsers }) {
                 <th className="text-left p-4 text-sm font-semibold text-gray-400">
                   Status
                 </th>
+                <th className="text-center p-4 text-sm font-semibold text-gray-400">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center p-6 text-gray-400">
+                  <td colSpan="5" className="text-center p-6 text-gray-400">
                     Loading users...
                   </td>
                 </tr>
               ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center p-6 text-gray-400">
+                  <td colSpan="5" className="text-center p-6 text-gray-400">
                     No users found
                   </td>
                 </tr>
@@ -577,6 +662,21 @@ export default function UserManagement({ users, setUsers }) {
                       >
                         {normalizedStatus.toUpperCase()}
                       </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteUser(user);
+                        }}
+                        disabled={deletingUserId === user.id}
+                        className="inline-flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-red-300 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Delete user"
+                        aria-label="Delete user"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                   );
@@ -620,6 +720,8 @@ export default function UserManagement({ users, setUsers }) {
         onClose={handleCloseModal}
         userStatus={userStatus}
         setUserStatus={setUserStatus}
+        userIssueNote={userIssueNote}
+        setUserIssueNote={setUserIssueNote}
         handleStatusChange={handleStatusChange}
         isUpdating={isUpdating}
         updateMessage={updateMessage}
