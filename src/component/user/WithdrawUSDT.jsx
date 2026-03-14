@@ -129,7 +129,7 @@ export default function WithdrawPage() {
         key: "arbx_wallet",
         label: "ARBX Wallet",
         balance: toNumber(user?.arbx_wallet),
-        disabled: true
+        disabled: true,
       },
       // {
       //   key: "deposit_wallet",
@@ -172,7 +172,9 @@ export default function WithdrawPage() {
 
   const networkDisplayMap = useMemo(
     () =>
-      new Map(networks.map((network) => [network.network_name, network.display_name])),
+      new Map(
+        networks.map((network) => [network.network_name, network.display_name]),
+      ),
     [networks],
   );
 
@@ -199,11 +201,12 @@ export default function WithdrawPage() {
       try {
         setIsLoading(true);
 
-        const [userResponse, withdrawalsResponse, networksResponse] = await Promise.all([
-          refreshUserStore(),
-          getMyWithdrawals(),
-          getActiveDepositNetworks(),
-        ]);
+        const [userResponse, withdrawalsResponse, networksResponse] =
+          await Promise.all([
+            refreshUserStore(),
+            getMyWithdrawals(),
+            getActiveDepositNetworks(),
+          ]);
 
         if (userResponse?.data?.user) {
           setUser(userResponse.data.user);
@@ -287,7 +290,8 @@ export default function WithdrawPage() {
 
       setFeedback({
         type: "success",
-        message: "Withdrawal request submitted. It is now pending admin review.",
+        message:
+          "Withdrawal request submitted. It is now pending admin review.",
       });
       setFieldErrors(INITIAL_FIELD_ERRORS);
       setAmount("");
@@ -375,8 +379,8 @@ export default function WithdrawPage() {
             <div className="flex gap-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4">
               <AlertTriangle className="h-5 w-5 text-yellow-400" />
               <p className="text-sm text-yellow-200">
-                Minimum withdrawal amount is {MIN_WITHDRAW_AMOUNT} USDT.
-                Requests are subject to admin approval.
+                Minimum withdrawal amount is {MIN_WITHDRAW_AMOUNT} USDT. The
+                standard processing time for withdrawals is 4–6 hours.
               </p>
             </div>
           </div>
@@ -598,7 +602,10 @@ export default function WithdrawPage() {
         </div>
       </div>
 
-      <StatusFeedbackModal feedback={feedback} onClose={() => setFeedback(null)} />
+      <StatusFeedbackModal
+        feedback={feedback}
+        onClose={() => setFeedback(null)}
+      />
     </div>
   );
 }
