@@ -233,6 +233,22 @@ export function UserDashboard() {
       .split("_")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
+  const _hash36 = (value, length = 6) => {
+    const seed = String(value ?? "");
+    let hash = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+      hash = (hash * 33 + seed.charCodeAt(i)) >>> 0;
+    }
+    return hash.toString(36).toUpperCase().padStart(length, "0").slice(-length);
+  };
+  const _genTransactionId = (prefix, nativeId, createdAt, extra = "") => {
+    const timePart = Number.isFinite(new Date(createdAt).getTime())
+      ? new Date(createdAt).getTime().toString(36).toUpperCase().slice(-6)
+      : _hash36(createdAt, 6);
+    const idPart = _hash36(`${prefix}-${nativeId}`, 5);
+    const randomPart = _hash36(`${nativeId}|${createdAt}|${extra}|ARBIGROW`, 6);
+    return `TXN-${prefix}-${timePart}${idPart}${randomPart}`;
+  };
   const _mapStatus = (s) => {
     const v = (s || "").toLowerCase();
     if (v === "approved" || v === "completed") return "Completed";
@@ -245,6 +261,7 @@ export function UserDashboard() {
     deps.forEach((d) =>
       rows.push({
         id: `dep_${d.id}`,
+        transactionId: _genTransactionId("DEP", d.id, d.created_at, d.txid),
         date: _fmtDate(d.created_at),
         type: "Deposit",
         wallet: "Deposit Wallet",
@@ -258,6 +275,12 @@ export function UserDashboard() {
     wdws.forEach((w) =>
       rows.push({
         id: `wdw_${w.id}`,
+        transactionId: _genTransactionId(
+          "WDW",
+          w.id,
+          w.created_at,
+          w.destination_address,
+        ),
         date: _fmtDate(w.created_at),
         type: "Withdrawal",
         wallet: _fmtWallet(w.source_wallet),
@@ -271,6 +294,7 @@ export function UserDashboard() {
     ears.forEach((e) =>
       rows.push({
         id: `ear_${e.id}`,
+        transactionId: _genTransactionId("EAR", e.id, e.created_at, e.type),
         date: _fmtDate(e.created_at),
         type:
           e.wallet_type === "referral" ? "Referral Bonus" : "Generation Bonus",
@@ -291,6 +315,12 @@ export function UserDashboard() {
     pfts.forEach((p) =>
       rows.push({
         id: `pft_${p.id}`,
+        transactionId: _genTransactionId(
+          "PFT",
+          p.id,
+          p.created_at,
+          p.package_name,
+        ),
         date: _fmtDate(p.created_at),
         type: "Profit Credit",
         wallet: "Main Wallet",

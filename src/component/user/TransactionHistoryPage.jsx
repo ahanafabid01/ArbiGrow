@@ -95,6 +95,9 @@ const TransactionHistoryPage = ({
                   Date
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-gray-400">
+                  Transaction ID
+                </th>
+                <th className="text-left p-4 text-sm font-semibold text-gray-400">
                   Type
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-gray-400">
@@ -114,14 +117,14 @@ const TransactionHistoryPage = ({
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
                     <p className="text-gray-400 text-sm">Loading transactions...</p>
                   </td>
                 </tr>
               ) : currentTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-gray-500 text-sm">
+                  <td colSpan={7} className="py-16 text-center text-gray-500 text-sm">
                     No transactions found.
                   </td>
                 </tr>
@@ -133,6 +136,9 @@ const TransactionHistoryPage = ({
                 >
                   <td className="p-4 text-gray-400 text-sm">
                     {transaction.date}
+                  </td>
+                  <td className="p-4 text-gray-300 text-xs font-mono">
+                    {transaction.transactionId || "-"}
                   </td>
                   <td className="p-4 text-white text-sm">{transaction.type}</td>
                   <td className="p-4 text-gray-400 text-sm">
@@ -199,6 +205,12 @@ const TransactionHistoryPage = ({
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 mb-1">Transaction ID</p>
+                    <p className="text-xs text-gray-300 font-mono break-all">
+                      {transaction.transactionId || "-"}
+                    </p>
+                  </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Wallet</p>
                     <p className="text-sm text-gray-300">{transaction.wallet}</p>
