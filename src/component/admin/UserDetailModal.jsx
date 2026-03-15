@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -8,6 +9,11 @@ import {
   Wallet,
   FileText,
   Users,
+  Package,
+  GitBranch,
+  Award,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 export default function UserDetailModal({
@@ -57,12 +63,117 @@ export default function UserDetailModal({
   const withdrawalHistory = Array.isArray(selectedUser?.withdrawal_history)
     ? selectedUser.withdrawal_history
     : [];
+  const currentActivePackages = Array.isArray(selectedUser?.current_active_packages)
+    ? selectedUser.current_active_packages
+    : selectedUser?.current_active_package
+      ? [selectedUser.current_active_package]
+      : [];
   const formatDateTime = (value) => {
     if (!value) return "-";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleString();
   };
+  const formatPercent = (value) => {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return value || "-";
+    return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(2);
+  };
+
+  const levelColors = {
+    1: {
+      bg: "from-blue-600/15 to-cyan-600/10",
+      border: "border-blue-500/30",
+      text: "text-blue-400",
+      dot: "bg-blue-500",
+    },
+    2: {
+      bg: "from-cyan-600/15 to-teal-600/10",
+      border: "border-cyan-500/30",
+      text: "text-cyan-400",
+      dot: "bg-cyan-500",
+    },
+    3: {
+      bg: "from-purple-600/15 to-violet-600/10",
+      border: "border-purple-500/30",
+      text: "text-purple-400",
+      dot: "bg-purple-500",
+    },
+    4: {
+      bg: "from-pink-600/15 to-rose-600/10",
+      border: "border-pink-500/30",
+      text: "text-pink-400",
+      dot: "bg-pink-500",
+    },
+    5: {
+      bg: "from-amber-600/15 to-orange-600/10",
+      border: "border-amber-500/30",
+      text: "text-amber-400",
+      dot: "bg-amber-500",
+    },
+  };
+
+  const [selectedReferralLevel, setSelectedReferralLevel] = useState(1);
+  useEffect(() => {
+    setSelectedReferralLevel(1);
+  }, [selectedUser?.id]);
+
+  const referralLevels = useMemo(() => {
+    const fallbackRates = {
+      1: "10%",
+      2: "8%",
+      3: "7%",
+      4: "6%",
+      5: "5%",
+    };
+    const sourceLevels = Array.isArray(selectedUser?.referral_tree?.levels)
+      ? selectedUser.referral_tree.levels
+      : [];
+
+    const byLevel = sourceLevels.reduce((acc, levelRow) => {
+      const levelNo = Number(levelRow?.level);
+      acc[levelNo] = {
+        level: levelNo,
+        commissionRate: levelRow?.commission_rate || fallbackRates[levelNo] || "0%",
+        totalEarnings: Number(levelRow?.total_earnings || 0),
+        users: Array.isArray(levelRow?.users)
+          ? levelRow.users.map((member) => ({
+              id: member?.id,
+              name: member?.name || "-",
+              username: member?.username || "-",
+              joinDate: member?.join_date || "-",
+              totalEarnings: Number(member?.total_earnings || 0),
+              directReferrals: Number(member?.direct_referrals || 0),
+              referredBy: member?.referred_by || "-",
+              status: member?.status || "inactive",
+            }))
+          : [],
+      };
+      return acc;
+    }, {});
+
+    return [1, 2, 3, 4, 5].map((levelNo) => {
+      return (
+        byLevel[levelNo] || {
+          level: levelNo,
+          commissionRate: fallbackRates[levelNo],
+          totalEarnings: 0,
+          users: [],
+        }
+      );
+    });
+  }, [selectedUser?.referral_tree]);
+
+  const totalReferrals =
+    Number(selectedUser?.referral_tree?.total_referrals || 0) ||
+    referralLevels.reduce((sum, level) => sum + level.users.length, 0);
+  const totalActiveReferrals = Number(
+    selectedUser?.referral_tree?.total_active_referrals || 0,
+  );
+  const activeLevel =
+    referralLevels.find((level) => level.level === selectedReferralLevel) ||
+    referralLevels[0];
+  const lc = levelColors[selectedReferralLevel];
 
   return (
     <AnimatePresence>
@@ -129,6 +240,61 @@ export default function UserDetailModal({
                     selectedUser?.kyc?.document_type?.toUpperCase() || "N/A"
                   }
                 />
+              </div>
+
+              {/* Active Packages */}
+              <div>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-cyan-400" />
+                  Current Active Packages
+                </h3>
+                {currentActivePackages.length > 0 ? (
+                  <div className="grid gap-3">
+                    {currentActivePackages.map((pkg) => (
+                      <div
+                        key={pkg.id}
+                        className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4"
+                      >
+                        <div className="grid gap-3 md:grid-cols-2 text-sm">
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">Package Name</div>
+                            <div className="text-white font-semibold">
+                              {pkg.package_name || "-"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">Invested Amount</div>
+                            <div className="text-white font-semibold">
+                              {pkg.invested_amount} USDT
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">ROI Cap</div>
+                            <div className="text-white font-semibold">
+                              {formatPercent(pkg.roi_percent)}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">Started</div>
+                            <div className="text-white font-semibold">
+                              {formatDateTime(pkg.start_date)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">Status</div>
+                            <div className="text-white font-semibold capitalize">
+                              {pkg.status || "-"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-gray-400">
+                    No active packages found for this user.
+                  </div>
+                )}
               </div>
 
               {/* Wallets */}
@@ -205,36 +371,230 @@ export default function UserDetailModal({
                 </div>
               </div>
 
-              {/* Referrers */}
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-cyan-400" />
-                  Referrer Hierarchy (5 Levels)
-                </h3>
+              {/* Referral Tree */}
+              <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 overflow-hidden">
+                <div className="p-4 md:p-5 border-b border-white/10 flex items-center gap-3">
+                  <GitBranch className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Referral Tree</h3>
+                    <p className="text-xs text-gray-400">
+                      {totalReferrals} members across 5 levels
+                      {totalActiveReferrals > 0
+                        ? ` • ${totalActiveReferrals} active`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
 
-                <div className="space-y-2">
-                  {selectedUser?.referrers?.length > 0 ? (
-                    selectedUser.referrers.map((ref) => (
-                      <div
-                        key={ref.level}
-                        className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center gap-4"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm flex-shrink-0">
-                          L{ref.level}
+                <div className="px-4 md:px-5 pt-4 pb-1">
+                  <div
+                    className="flex gap-2 overflow-x-auto pb-1"
+                    style={{ scrollbarWidth: "none" }}
+                  >
+                    {referralLevels.map((level) => {
+                      const levelStyle = levelColors[level.level];
+                      const isActive = selectedReferralLevel === level.level;
+
+                      return (
+                        <button
+                          key={level.level}
+                          onClick={() => setSelectedReferralLevel(level.level)}
+                          className={`flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-2.5 rounded-xl border transition-all duration-200 min-w-[72px] ${
+                            isActive
+                              ? `bg-gradient-to-br ${levelStyle.bg} ${levelStyle.border}`
+                              : "bg-white/[0.04] border-white/10 hover:border-white/20"
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] font-semibold ${
+                              isActive ? levelStyle.text : "text-gray-500"
+                            }`}
+                          >
+                            Level {level.level}
+                          </span>
+                          <span
+                            className={`text-lg font-bold leading-none ${
+                              isActive ? "text-white" : "text-gray-500"
+                            }`}
+                          >
+                            {level.users.length}
+                          </span>
+                          <span
+                            className={`text-[9px] font-medium ${
+                              isActive ? levelStyle.text : "text-gray-600"
+                            }`}
+                          >
+                            {level.commissionRate}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div
+                  className={`mx-4 md:mx-5 mt-3 px-3 py-2.5 rounded-xl bg-gradient-to-r ${lc.bg} border ${lc.border} flex flex-wrap items-center justify-between gap-2`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${lc.border} ${lc.text} bg-black/20`}
+                    >
+                      L{selectedReferralLevel}
+                    </span>
+                    <span className="text-white text-sm font-semibold">
+                      {activeLevel.users.length} member
+                      {activeLevel.users.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Award className={`w-3.5 h-3.5 ${lc.text}`} />
+                      <span className={`${lc.text} font-semibold`}>
+                        {activeLevel.commissionRate}
+                      </span>
+                    </div>
+                    <span className="text-green-400 font-semibold">
+                      ${activeLevel.totalEarnings.toFixed(2)} earned
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 md:p-5">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={selectedReferralLevel}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.2 }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                    >
+                      {activeLevel.users.length === 0 ? (
+                        <div className="md:col-span-2 p-4 rounded-xl bg-white/5 border border-white/10 text-center text-sm text-gray-400">
+                          No members found for Level {selectedReferralLevel}.
                         </div>
-                        <div className="flex-1">
-                          <div className="text-white font-semibold">
-                            {ref.username || "N/A"}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {ref.email || "N/A"}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-400">No referrers available</div>
-                  )}
+                      ) : (
+                        activeLevel.users.map((member, index) => (
+                          <motion.div
+                            key={`${member.id}-${index}`}
+                            initial={{ opacity: 0, scale: 0.97 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                            className={`p-4 rounded-xl bg-gradient-to-br from-white/[0.06] to-white/[0.01] border border-white/10 hover:${lc.border} transition-all duration-300`}
+                          >
+                            <div className="flex items-center justify-between mb-3 gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div
+                                  className={`w-9 h-9 rounded-full bg-gradient-to-br ${lc.bg} border ${lc.border} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}
+                                >
+                                  {(member.name || "U").charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-white font-semibold text-sm truncate">
+                                    {member.name || "-"}
+                                  </div>
+                                  <div className="text-gray-400 text-[11px] truncate">
+                                    @{member.username || "-"}
+                                  </div>
+                                </div>
+                              </div>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${
+                                  member.status === "active"
+                                    ? "bg-green-500/10 text-green-400 border-green-500/30"
+                                    : "bg-gray-500/10 text-gray-500 border-gray-500/30"
+                                }`}
+                              >
+                                {member.status === "active" ? "● Active" : "○ Inactive"}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-1.5 mb-3">
+                              {[
+                                {
+                                  label: "Joined",
+                                  value: member.joinDate || "-",
+                                  cls: "text-white",
+                                },
+                                {
+                                  label: "Earnings",
+                                  value: `$${Number(member.totalEarnings || 0).toFixed(2)}`,
+                                  cls: "text-green-400",
+                                },
+                                {
+                                  label: "Sub-refs",
+                                  value: String(member.directReferrals || 0),
+                                  cls: lc.text,
+                                },
+                              ].map((stat) => (
+                                <div
+                                  key={stat.label}
+                                  className="bg-white/[0.04] rounded-lg px-2 py-3 flex flex-col items-center justify-center text-center"
+                                >
+                                  <div className="text-[9px] text-gray-500 mb-0.5 uppercase tracking-wide">
+                                    {stat.label}
+                                  </div>
+                                  <div className={`text-[11px] font-bold ${stat.cls} leading-tight`}>
+                                    {stat.value}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r ${lc.bg} border ${lc.border}`}
+                            >
+                              <Users className={`w-3 h-3 ${lc.text} flex-shrink-0`} />
+                              <span className="text-gray-500 text-[10px]">via</span>
+                              <span className={`${lc.text} text-[10px] font-semibold truncate`}>
+                                @{member.referredBy || "-"}
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <div className="px-4 md:px-5 pb-4 border-t border-white/10 pt-3 flex items-center justify-between">
+                  <button
+                    onClick={() =>
+                      setSelectedReferralLevel((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={selectedReferralLevel === 1}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    {referralLevels.map((level) => {
+                      const levelStyle = levelColors[level.level];
+                      const isActive = selectedReferralLevel === level.level;
+                      return (
+                        <button
+                          key={level.level}
+                          onClick={() => setSelectedReferralLevel(level.level)}
+                          className={`rounded-full transition-all duration-300 ${
+                            isActive
+                              ? `h-2 w-5 ${levelStyle.dot}`
+                              : "h-2 w-2 bg-white/20 hover:bg-white/40"
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setSelectedReferralLevel((prev) => Math.min(5, prev + 1))
+                    }
+                    disabled={selectedReferralLevel === 5}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
