@@ -1,0 +1,70 @@
+from sqlalchemy import ForeignKey, DateTime, String, Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
+from decimal import Decimal
+
+from app.core.base import Base
+
+
+class Investment(Base):
+    __tablename__ = "investments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        index=True,
+        nullable=False
+    )
+
+    # package snapshot
+    package_name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    invested_amount: Mapped[Decimal] = mapped_column(
+        Numeric(24, 14),
+        nullable=False
+    )
+
+    roi_percent: Mapped[Decimal] = mapped_column(
+        Numeric(10, 4),
+        nullable=False
+    )  # example 150%
+
+    expected_profit: Mapped[Decimal] = mapped_column(
+        Numeric(24, 14),
+        nullable=False
+    )
+
+    profit_earned: Mapped[Decimal] = mapped_column(
+        Numeric(24, 14),
+        default=Decimal("0"),
+        server_default="0"
+    )
+
+    profit_percentage_paid: Mapped[Decimal] = mapped_column(
+        Numeric(10, 4),
+        default=Decimal("0"),
+        server_default="0"
+    )
+
+    start_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    end_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active"
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+
+    user = relationship("User")

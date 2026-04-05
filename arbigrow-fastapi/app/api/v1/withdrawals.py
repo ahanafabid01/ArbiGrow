@@ -1,0 +1,297 @@
+from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
+from app.api.v1.deps import get_current_admin_user, get_current_user
+from app.core.database import get_db
+from app.models.deposit_network import DepositNetwork
+from app.models.user import User
+from app.models.withdrawal import Withdrawal
+from app.schemas.withdrawal import WithdrawalCreate, WithdrawalStatusUpdate
+from app.utils.email import send_withdraw_success_email
+
+router = APIRouter(prefix="/withdrawals", tags=["Withdrawals"])
+
+MIN_WITHDRAW_AMOUNT = Decimal("10")
+WALLET_PRECISION = Decimal("0.00000000000001")
+WITHDRAW_MAIN_WALLET_EXTRA_RATE = Decimal("0.01")
+ALLOWED_SOURCE_WALLETS = {
+    "main_wallet",
+    "arbx_wallet",
+    "deposit_wallet",
+    "withdraw_wallet",
+    "referral_wallet",
+    "generation_wallet",
+}
+
+
+def _to_wallet_precision(amount: Decimal) -> Decimal:
+    return amount.quantize(WALLET_PRECISION, rounding=ROUND_HALF_UP)
+
+
+def _serialize_withdrawal(withdrawal: Withdrawal, include_user: bool = False) -> dict:
+    item = {
+        "id": withdrawal.id,
+        "source_wallet": withdrawal.source_wallet,
+        "network_name": withdrawal.network_name,
+        "amount": float(withdrawal.amount),
+        "destination_address": withdrawal.destination_address,
+        "note": withdrawal.note,
+        "status": withdrawal.status,
+        "created_at": withdrawal.created_at,
+        "processed_at": withdrawal.processed_at,
+        "approved_by": withdrawal.approved_by,
+    }
+
+    if include_user and withdrawal.user:
+        item["user"] = {
+            "name": withdrawal.user.full_name,
+            "email": withdrawal.user.email,
+        }
+
+    if include_user and withdrawal.approver:
+        item["approver"] = {
+            "name": withdrawal.approver.full_name,
+            "email": withdrawal.approver.email,
+        }
+
+    return item
+
+
+@router.post("/")
+async def create_withdrawal_request(
+    data: WithdrawalCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if (current_user.account_status or "").lower() == "on_hold":
+        issue_note = (current_user.account_issue or "").strip()
+        detail = "Your account is on hold. Withdrawals are currently disabled."
+        if issue_note:
+            detail = f"{detail} Issue: {issue_note}"
+        raise HTTPException(status_code=403, detail=detail)
+
+    if data.source_wallet not in ALLOWED_SOURCE_WALLETS:
+        raise HTTPException(status_code=400, detail="Invalid wallet selected")
+
+    network_name = data.network_name.strip()
+    if not network_name:
+        raise HTTPException(status_code=400, detail="Please select a network")
+
+    active_network_result = await db.execute(
+        select(DepositNetwork).where(
+            DepositNetwork.network_name == network_name,
+            DepositNetwork.status.is_(True),
+        )
+    )
+    active_network = active_network_result.scalar_one_or_none()
+    if not active_network:
+        raise HTTPException(
+            status_code=400, detail="Selected network is not active")
+
+    amount = _to_wallet_precision(Decimal(str(data.amount)))
+    if amount < MIN_WITHDRAW_AMOUNT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Minimum withdrawal amount is {MIN_WITHDRAW_AMOUNT} USDT",
+        )
+
+    source_balance = Decimal(
+        str(getattr(current_user, data.source_wallet, Decimal("0")) or 0)
+    )
+
+    if source_balance < amount:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Insufficient balance in {data.source_wallet}. "
+                f"Available: {source_balance}"
+            ),
+        )
+
+    main_balance = Decimal(
+        str(getattr(current_user, "main_wallet", Decimal("0")) or 0))
+    required_main_balance = _to_wallet_precision(
+        amount + (amount * WITHDRAW_MAIN_WALLET_EXTRA_RATE)
+    )
+    if main_balance < required_main_balance:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Insufficient main_wallet balance for withdrawal eligibility. "
+                f"Required: {required_main_balance}, Available: {main_balance}"
+            ),
+        )
+
+    withdrawal = Withdrawal(
+        user_id=current_user.id,
+        source_wallet=data.source_wallet,
+        network_name=network_name,
+        amount=amount,
+        destination_address=data.destination_address.strip(),
+        note=(data.note or "").strip() or None,
+        status="pending",
+    )
+    db.add(withdrawal)
+
+    await db.commit()
+    await db.refresh(withdrawal)
+
+    return {
+        "message": "Withdrawal request submitted successfully",
+        "data": _serialize_withdrawal(withdrawal),
+    }
+
+
+@router.get("/my")
+async def get_my_withdrawals(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Withdrawal)
+        .where(Withdrawal.user_id == current_user.id)
+        .order_by(Withdrawal.created_at.desc())
+    )
+
+    withdrawals = result.scalars().all()
+
+    return {
+        "data": [_serialize_withdrawal(withdrawal) for withdrawal in withdrawals]
+    }
+
+
+@router.get("/admin")
+async def get_admin_withdrawals(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50),
+    status: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin_user),
+):
+    del admin
+
+    base_query = select(Withdrawal)
+
+    if status:
+        base_query = base_query.where(Withdrawal.status == status.lower())
+
+    total_result = await db.execute(
+        select(func.count()).select_from(base_query.subquery())
+    )
+    total = total_result.scalar() or 0
+
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+
+    result = await db.execute(
+        base_query.options(
+            joinedload(Withdrawal.user),
+            joinedload(Withdrawal.approver),
+        )
+        .order_by(Withdrawal.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    withdrawals = result.scalars().all()
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "total_pages": total_pages,
+        "data": [
+            _serialize_withdrawal(withdrawal, include_user=True)
+            for withdrawal in withdrawals
+        ],
+    }
+
+
+@router.patch("/{withdrawal_id}")
+async def update_withdrawal_status(
+    withdrawal_id: int,
+    data: WithdrawalStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin_user),
+):
+    result = await db.execute(
+        select(Withdrawal)
+        .where(Withdrawal.id == withdrawal_id)
+        .with_for_update()
+    )
+    withdrawal = result.scalar_one_or_none()
+
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+
+    if withdrawal.status != "pending":
+        raise HTTPException(
+            status_code=400,
+            detail="Withdrawal already processed",
+        )
+
+    if data.status == "approved":
+        user_result = await db.execute(
+            select(User)
+            .where(User.id == withdrawal.user_id)
+            .with_for_update()
+        )
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        source_wallet = withdrawal.source_wallet
+        if source_wallet not in ALLOWED_SOURCE_WALLETS:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid source wallet on withdrawal request",
+            )
+
+        source_balance = Decimal(str(getattr(user, source_wallet) or 0))
+        amount = Decimal(str(withdrawal.amount))
+        fee = amount * WITHDRAW_MAIN_WALLET_EXTRA_RATE
+        total_deduction = amount + fee
+
+        if source_balance < total_deduction:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Insufficient user balance in {source_wallet}. "
+                    f"Available: {source_balance}"
+                ),
+            )
+
+        setattr(user, source_wallet, _to_wallet_precision(
+            source_balance - total_deduction
+        ))
+        user.withdraw_wallet = _to_wallet_precision(
+            Decimal(str(user.withdraw_wallet or 0)) + amount
+        )
+
+    withdrawal.status = data.status
+    withdrawal.approved_by = admin.id
+    withdrawal.processed_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(withdrawal)
+
+    if data.status == "approved":
+        try:
+            await send_withdraw_success_email(
+                userid=withdrawal.user_id,
+                amount=f"{Decimal(str(withdrawal.amount)):.2f}",
+                currency="USDT",
+                wallet_address=withdrawal.destination_address,
+                tx_hash=None,
+            )
+        except Exception as mail_error:
+            print(f"[warn] Failed to send withdrawal approval email: {mail_error}")
+
+    return {
+        "message": f"Withdrawal {withdrawal.status}",
+        "data": _serialize_withdrawal(withdrawal),
+    }

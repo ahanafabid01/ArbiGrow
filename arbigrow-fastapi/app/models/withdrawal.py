@@ -1,0 +1,36 @@
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Numeric,
+    Text,
+)
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+
+from app.core.base import Base
+
+
+class Withdrawal(Base):
+    __tablename__ = "withdrawals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    source_wallet = Column(String(50), nullable=False)
+    network_name = Column(String(100), nullable=True)
+    amount = Column(Numeric(24, 14), nullable=False)
+    destination_address = Column(String(255), nullable=False)
+    note = Column(Text, nullable=True)
+
+    status = Column(String(20), default="pending", nullable=False)
+    # pending | approved | rejected
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", foreign_keys=[user_id])
+    approver = relationship("User", foreign_keys=[approved_by])

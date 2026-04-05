@@ -1,0 +1,220 @@
+from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+
+from app.core.database import get_db
+from app.models.user import User
+from app.models.investments import Investment
+from app.schemas.investment import BuyInvestmentRequest, BuyInvestmentResponse
+from app.api.v1.deps import get_current_user
+from app.core.rate_limiter import limiter
+from app.models.investment_profit_history import InvestmentProfitHistory
+
+
+router = APIRouter(prefix="/investments", tags=["Investments"])
+WALLET_PRECISION = Decimal("0.00000000000001")
+PERCENT_PRECISION = Decimal("0.0001")
+ROI_CAP_PERCENT = Decimal("150")
+
+
+def _get_remaining_percentage(inv: Investment) -> Decimal:
+    remaining = inv.roi_percent - inv.profit_percentage_paid
+    return max(Decimal("0"), remaining)
+
+
+def _get_progress_percentage(inv: Investment) -> Decimal:
+    if inv.roi_percent <= 0:
+        return Decimal("0")
+    progress = (inv.profit_percentage_paid / inv.roi_percent) * Decimal("100")
+    progress = min(Decimal("100"), progress)
+    return progress.quantize(PERCENT_PRECISION, rounding=ROUND_HALF_UP)
+
+
+@router.post("/buy", response_model=BuyInvestmentResponse)
+@limiter.limit("20/minute")
+async def buy_investment(
+    request: Request,
+    payload: BuyInvestmentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if (current_user.account_status or "").lower() == "on_hold":
+        issue_note = (current_user.account_issue or "").strip()
+        detail = "Your account is on hold. Investment purchases are currently disabled."
+        if issue_note:
+            detail = f"{detail} Issue: {issue_note}"
+        raise HTTPException(status_code=403, detail=detail)
+
+    amount = Decimal(str(payload.amount))
+    roi_percent = ROI_CAP_PERCENT
+
+    user_result = await db.execute(
+        select(User)
+        .where(User.id == current_user.id)
+        .with_for_update()
+    )
+    user = user_result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # prevent buying lower package while any current package is still active
+    active_floor_result = await db.execute(
+        select(func.max(Investment.invested_amount)).where(
+            Investment.user_id == user.id,
+            Investment.status == "active",
+        )
+    )
+    active_floor_amount = active_floor_result.scalar_one_or_none()
+
+    if active_floor_amount is not None and amount < active_floor_amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "You cannot buy a lower-value package before your current "
+                f"package completes ({ROI_CAP_PERCENT}% ROI cap)."
+            ),
+        )
+
+    # check balance
+    if user.main_wallet < amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient main wallet balance",
+        )
+
+    # calculate expected profit
+    expected_profit = ((amount * roi_percent) / Decimal("100")).quantize(
+        WALLET_PRECISION,
+        rounding=ROUND_HALF_UP,
+    )
+
+    start_date = datetime.now(timezone.utc)
+    end_date = start_date
+
+    # deduct wallet
+    user.main_wallet = (user.main_wallet - amount).quantize(
+        WALLET_PRECISION,
+        rounding=ROUND_HALF_UP,
+    )
+
+    investment = Investment(
+        user_id=user.id,
+        package_name=payload.package_name,
+        invested_amount=amount,
+        roi_percent=roi_percent,
+        expected_profit=expected_profit,
+        start_date=start_date,
+        end_date=end_date,
+        status="active",
+    )
+
+    db.add(investment)
+
+    await db.commit()
+    await db.refresh(investment)
+    await db.refresh(user)
+
+    return BuyInvestmentResponse(
+        id=investment.id,
+        package_name=investment.package_name,
+        invested_amount=investment.invested_amount,
+        roi_percent=investment.roi_percent,
+        expected_profit=investment.expected_profit,
+        status=investment.status,
+        main_wallet_balance=user.main_wallet,
+    )
+
+
+@router.get("/my")
+@limiter.limit("300/minute")
+async def get_my_investments(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    result = await db.execute(
+        select(Investment)
+        .where(Investment.user_id == current_user.id)
+        .order_by(Investment.created_at.desc())
+    )
+
+    investments = result.scalars().all()
+
+    return [
+        {
+            "id": inv.id,
+            "package_name": inv.package_name,
+            "invested_amount": inv.invested_amount,
+            "roi_percent": inv.roi_percent,
+            "expected_profit": inv.expected_profit,
+            "profit_earned": inv.profit_earned,
+            "profit_percentage_paid": inv.profit_percentage_paid,
+            "remaining_percentage": _get_remaining_percentage(inv),
+            "progress_percentage": _get_progress_percentage(inv),
+            "start_date": inv.start_date,
+            "status": inv.status,
+        }
+        for inv in investments
+    ]
+
+
+@router.get("/{investment_id}")
+@limiter.limit("200/minute")
+async def get_investment_details(
+    request: Request,
+    investment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    result = await db.execute(
+        select(Investment).where(
+            Investment.id == investment_id,
+            Investment.user_id == current_user.id
+        )
+    )
+
+    investment = result.scalar_one_or_none()
+
+    if not investment:
+        raise HTTPException(404, "Investment not found")
+
+    history_result = await db.execute(
+        select(InvestmentProfitHistory)
+        .where(InvestmentProfitHistory.investment_id == investment.id)
+        .order_by(InvestmentProfitHistory.created_at.desc())
+    )
+
+    history = history_result.scalars().all()
+
+    return {
+        "investment": {
+            "id": investment.id,
+            "package_name": investment.package_name,
+            "invested_amount": investment.invested_amount,
+            "roi_percent": investment.roi_percent,
+            "expected_profit": investment.expected_profit,
+            "profit_earned": investment.profit_earned,
+            "profit_percentage_paid": investment.profit_percentage_paid,
+            "remaining_percentage": _get_remaining_percentage(investment),
+            "progress_percentage": _get_progress_percentage(investment),
+            "start_date": investment.start_date,
+            "status": investment.status,
+        },
+        "profit_history": [
+            {
+                "amount": h.amount,
+                "percentage": h.percentage,
+                "date": h.created_at
+            }
+            for h in history
+        ]
+    }

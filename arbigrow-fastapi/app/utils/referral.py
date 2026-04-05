@@ -1,0 +1,91 @@
+from decimal import Decimal, ROUND_HALF_UP
+from typing import List
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.user import User
+
+
+# Cascading distribution:
+# L1 = profit * 10%
+# L2 = L1 * 8%
+# L3 = L2 * 7%
+# L4 = L3 * 6%
+# L5 = L4 * 5%
+REFERRAL_CHAIN_RATES: tuple[Decimal, ...] = (
+    Decimal("0.10"),
+    Decimal("0.08"),
+    Decimal("0.07"),
+    Decimal("0.06"),
+    Decimal("0.05"),
+)
+
+WALLET_PRECISION = Decimal("0.00000000000001")
+
+
+def _to_wallet_precision(amount: Decimal) -> Decimal:
+    return amount.quantize(WALLET_PRECISION, rounding=ROUND_HALF_UP)
+
+
+def calculate_cascading_referral_amounts(base_profit: Decimal) -> List[Decimal]:
+    base = Decimal(str(base_profit))
+    if base <= 0:
+        return [Decimal("0")] * len(REFERRAL_CHAIN_RATES)
+
+    payouts: List[Decimal] = []
+    source_amount = base
+
+    for rate in REFERRAL_CHAIN_RATES:
+        amount = _to_wallet_precision(source_amount * rate)
+        payouts.append(amount)
+        source_amount = amount
+
+    return payouts
+
+
+async def apply_cascading_referral_commissions(
+    db: AsyncSession,
+    user: User,
+    base_profit: Decimal,
+) -> List[dict]:
+    payouts = calculate_cascading_referral_amounts(base_profit)
+    parent_ids = [
+        user.parent_lvl_1_id,
+        user.parent_lvl_2_id,
+        user.parent_lvl_3_id,
+        user.parent_lvl_4_id,
+        user.parent_lvl_5_id,
+    ]
+
+    distributed: List[dict] = []
+
+    for level_index, parent_id in enumerate(parent_ids):
+        amount = payouts[level_index]
+        if not parent_id or amount <= 0:
+            continue
+
+        parent_user = await db.get(User, parent_id)
+        if not parent_user:
+            continue
+
+        if level_index == 0:
+            parent_user.referral_wallet = _to_wallet_precision(
+                parent_user.referral_wallet + amount
+            )
+            wallet_type = "referral_wallet"
+        else:
+            parent_user.generation_wallet = _to_wallet_precision(
+                parent_user.generation_wallet + amount
+            )
+            wallet_type = "generation_wallet"
+
+        distributed.append(
+            {
+                "level": level_index + 1,
+                "user_id": parent_user.id,
+                "wallet": wallet_type,
+                "amount": amount,
+            }
+        )
+
+    return distributed
